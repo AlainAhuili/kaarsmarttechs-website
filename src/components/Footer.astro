@@ -1,0 +1,63 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap cols">
+    <div>
+      <p class="name">Kaar Smart Techs</p>
+      <p>
+        Vision, embedded and cloud systems.
+        <br />
+        Delmenhorst, Germany
+      </p>
+    </div>
+    <nav aria-label="Legal">
+      <a href="/impressum/">Impressum</a>
+      <a href="/datenschutz/">Privacy policy</a>
+      <a href="/contact/">Contact</a>
+    </nav>
+  </div>
+  <div class="wrap fine">
+    <p>
+      &copy; {year} Kaar Smart Techs. LEGO&reg; is a trademark of the LEGO Group, which does not
+      sponsor, authorise or endorse this website.
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--ink);
+    color: #c9d2dc;
+    padding-block: 3rem 1.5rem;
+  }
+  .cols {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+  .name {
+    font-family: var(--display);
+    font-variation-settings: "wdth" 125;
+    font-weight: 800;
+    color: #fff;
+    font-size: 1.2rem;
+    margin-bottom: 0.4rem;
+  }
+  nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  a {
+    color: #fff;
+  }
+  .fine {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #2c3b50;
+    font-size: var(--step--1);
+  }
+</style>

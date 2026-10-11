@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: website-staging
+resources:
+  - namespace.yaml
+  - ../../base
+labels:
+  - pairs: { app.kubernetes.io/environment: staging }
+replicas:
+  - name: website
+    count: 1
+images:
+  - name: ghcr.io/kaarsmarttechs/website
+    newTag: latest # set by the pipeline: kustomize edit set image ...:sha-<commit>
+patches:
+  - target: { kind: Ingress, name: website }
+    patch: |-
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: staging.kaarsmarttechs.com
+      - op: replace
+        path: /spec/rules/0/host
+        value: staging.kaarsmarttechs.com
