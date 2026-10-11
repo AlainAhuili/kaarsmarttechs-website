@@ -11,7 +11,7 @@ ARG VERSION=dev
 RUN echo "$VERSION" > dist/version.txt
 
 # ---- runtime stage: static files only, non-root nginx --------------------------
-FROM nginxinc/nginx-unprivileged:1.27.3-alpine
+FROM nginxinc/nginx-unprivileged:1.31.6-alpine
 ARG VERSION=dev
 LABEL org.opencontainers.image.title="kaarsmarttechs-website" \
       org.opencontainers.image.source="https://github.com/kaarsmarttechs/website" \
