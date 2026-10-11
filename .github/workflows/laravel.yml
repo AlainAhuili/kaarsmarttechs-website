@@ -149,8 +149,11 @@ jobs:
       - name: Start Laravel, nginx and MySQL
         working-directory: laravel
         run: |
-          export APP_KEY="base64:$(openssl rand -base64 32)"
-          docker compose up -d --no-build
+          # One key for every later step: compose needs it to read the file, even for exec/logs.
+          key="base64:$(openssl rand -base64 32)"
+          echo "::add-mask::$key"
+          echo "APP_KEY=$key" >> "$GITHUB_ENV"
+          APP_KEY="$key" docker compose up -d --no-build
           for _ in $(seq 1 60); do
             [ "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/up)" = 200 ] && exit 0
             sleep 2
@@ -185,14 +188,10 @@ jobs:
         if: failure()
         working-directory: laravel
         run: docker compose logs --no-color
-        env:
-          APP_KEY: unused-for-logs
       - name: Stop the stack
         if: always()
         working-directory: laravel
         run: docker compose down -v
-        env:
-          APP_KEY: unused-for-shutdown
 
       - uses: docker/login-action@v3
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
