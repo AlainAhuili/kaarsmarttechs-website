@@ -7,6 +7,8 @@ COPY . .
 ARG SITE_URL=https://kaarsmarttechs.com
 ENV SITE_URL=$SITE_URL
 RUN npm run build
+ARG VERSION=dev
+RUN echo "$VERSION" > dist/version.txt
 
 # ---- runtime stage: static files only, non-root nginx --------------------------
 FROM nginxinc/nginx-unprivileged:1.27.3-alpine
@@ -17,7 +19,6 @@ LABEL org.opencontainers.image.title="kaarsmarttechs-website" \
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY --from=build /app/dist /usr/share/nginx/html
-RUN echo "$VERSION" > /usr/share/nginx/html/version.txt
 USER 101
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://127.0.0.1:8080/healthz || exit 1
