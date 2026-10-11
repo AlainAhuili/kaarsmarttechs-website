@@ -1,0 +1,180 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import SorterLine from "../components/SorterLine.astro";
+import ProjectRow from "../components/ProjectRow.astro";
+import { sortProjects } from "../lib/projects";
+
+const projects = sortProjects(await getCollection("projects"));
+const flagship = projects.find((p) => p.data.flagship)!;
+const others = projects.filter((p) => !p.data.flagship).slice(0, 3);
+
+const disciplines = [
+  {
+    name: "Computer vision",
+    text: "Cameras and OpenCV pipelines that identify, measure and count objects in real time.",
+  },
+  {
+    name: "Embedded systems",
+    text: "Low-level C++ that drives sensors and actuators reliably on small hardware.",
+  },
+  {
+    name: "Cloud and DevOps",
+    text: "Terraform, Docker, Kubernetes and AWS, delivered through automated pipelines.",
+  },
+  {
+    name: "Agentic tooling",
+    text: "Model Context Protocol integrations that let AI assistants work with your systems.",
+  },
+];
+---
+
+<Base
+  title="Kaar Smart Techs"
+  description="Kaar Smart Techs builds computer vision, embedded and cloud systems that work in the physical world. Based in Delmenhorst, Germany."
+>
+  <section class="hero">
+    <div class="wrap">
+      <h1>We build machines that see and sort.</h1>
+      <p class="lead">
+        Computer vision, embedded software and cloud infrastructure, engineered as one system. From
+        Delmenhorst, Germany.
+      </p>
+    </div>
+    <div class="wrap line">
+      <SorterLine />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <h2>What we work on</h2>
+      <ul class="disciplines">
+        {disciplines.map((d) => (
+          <li>
+            <h3>{d.name}</h3>
+            <p>{d.text}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section flagship">
+    <div class="wrap split">
+      <div>
+        <h2>{flagship.data.title}</h2>
+        <p class="lead">{flagship.data.tagline}</p>
+        <p>{flagship.data.problem}</p>
+        <a class="button" href={`/projects/${flagship.id}/`}>
+          Read the case study
+        </a>
+      </div>
+      <dl class="facts">
+        <div>
+          <dt>Status</dt>
+          <dd>{flagship.data.status}</dd>
+        </div>
+        <div>
+          <dt>Built with</dt>
+          <dd>{flagship.data.stack.join(", ")}</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <h2>More projects</h2>
+      <ul class="rows">
+        {others.map((p) => (
+          <ProjectRow project={p} />
+        ))}
+      </ul>
+      <p>
+        <a href="/projects/">See all projects</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section cta">
+    <div class="wrap">
+      <h2>Have a machine that needs to see?</h2>
+      <p class="lead">Tell us what you want to detect, sort or automate.</p>
+      <a class="button" href="/contact/">
+        Start a conversation
+      </a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    padding-top: clamp(3rem, 8vw, 6rem);
+  }
+  .hero h1 {
+    max-width: 14ch;
+  }
+  .line {
+    margin-top: clamp(1.5rem, 4vw, 3rem);
+  }
+  .disciplines {
+    list-style: none;
+    margin: 2rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    border-left: 1px solid var(--rule);
+  }
+  .disciplines li {
+    padding: 0.25rem 1.5rem 0.5rem;
+    border-right: 1px solid var(--rule);
+  }
+  .flagship {
+    background: var(--panel);
+  }
+  .split {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 3rem;
+    align-items: start;
+  }
+  .facts {
+    margin: 0;
+    border-top: 4px solid var(--signal);
+  }
+  .facts div {
+    padding-block: 0.9rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  dt {
+    color: var(--steel);
+    font-size: var(--step--1);
+  }
+  dd {
+    margin: 0.2rem 0 0;
+    font-weight: 500;
+  }
+  .rows {
+    list-style: none;
+    margin: 1.5rem 0;
+    padding: 0;
+  }
+  .cta {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .cta .lead {
+    color: #c9d2dc;
+  }
+  .cta .button {
+    background: var(--signal);
+    color: var(--ink);
+    border-bottom-color: var(--paper);
+  }
+  @media (max-width: 48rem) {
+    .split {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
