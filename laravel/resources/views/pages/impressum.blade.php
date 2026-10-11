@@ -1,0 +1,33 @@
+{{-- TODO before launch: replace every bracketed value with the registered company details
+     and have the text reviewed. An Impressum is mandatory for German business websites (§ 5 DDG). --}}
+<x-layout title="Impressum" description="Legal notice for Kaar Smart Techs.">
+  <section class="section">
+    <div class="wrap prose">
+      <h1>Impressum</h1>
+      <h2>Angaben gemäß § 5 DDG</h2>
+      <p>
+        Kaar Smart Techs
+        <br>
+        [Legal form]
+        <br>
+        [Street and number]
+        <br>
+        [Postcode] Delmenhorst
+        <br>
+        Germany
+      </p>
+      <h2>Vertreten durch</h2>
+      <p>[Name of owner or managing director]</p>
+      <h2>Kontakt</h2>
+      <p>
+        E-Mail: {{ config('site.contact_email') }}
+        <br>
+        Telefon: [Phone number]
+      </p>
+      <h2>Registereintrag</h2>
+      <p>[Register court and number, if registered in the Handelsregister]</p>
+      <h2>Umsatzsteuer-ID</h2>
+      <p>[USt-IdNr. according to § 27a UStG, if available]</p>
+    </div>
+  </section>
+</x-layout>

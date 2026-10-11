@@ -1,0 +1,14 @@
+# Used instead of the root .dockerignore when building laravel/Dockerfile (context: repo root).
+.git
+**/node_modules
+dist
+.astro
+infra
+k8s
+laravel/vendor
+laravel/.env
+laravel/tests
+laravel/phpunit.xml
+laravel/storage/logs/*
+laravel/storage/framework/views/*
+laravel/bootstrap/cache/*.php

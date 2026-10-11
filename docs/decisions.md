@@ -42,3 +42,13 @@ silently broken the project filter in production, so the build emits all scripts
 post-build test rejects inline scripts. Security headers live in one nginx snippet included in every
 location, because nginx drops server-level `add_header` directives in any location that sets its
 own; the smoke test checks the headers on the live site.
+
+## 7. A second release artifact on Laravel, nginx and MySQL
+
+The static site cannot accept input, and the company's next services need a database-backed web
+stack. The Laravel version renders the same pages from MySQL and adds a contact form. Project
+entries stay in `src/content/projects` and are synced into MySQL on every deployment, so both
+artifacts always show the same portfolio. Content pages stay stateless: only `/contact/` starts a
+session, so cookies are limited to the one page where they are strictly necessary. **Consequence:**
+the privacy policy of this version must mention the form and its session cookie, and the database
+needs backups once it holds real messages.

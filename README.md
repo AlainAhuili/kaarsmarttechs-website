@@ -65,6 +65,28 @@ Add a portfolio project by creating `src/content/projects/<slug>.md`; the schema
 or invalid fields at build time. Leave a metric's `value` empty until it is measured: the page
 shows "Measuring" instead of an estimate.
 
+## Second release artifact: Laravel + nginx + MySQL
+
+`laravel/` contains the same site as a Laravel 13 application on PHP 8.5, backed by MySQL 8.4. It
+reads the same project entries (`src/content/projects`, synced into MySQL by a seeder) and adds a
+working contact form whose messages are stored in MySQL and deleted after 180 days.
+
+It ships as two images built from `laravel/Dockerfile`, with the repository root as build context:
+
+- `ghcr.io/alainahuili/website-laravel-app`: PHP-FPM with the application code
+- `ghcr.io/alainahuili/website-laravel-web`: nginx serving `public/` and passing PHP requests to the app
+
+The `laravel.yml` workflow runs Pint and PHPUnit against MySQL, builds and scans both images, starts
+them with MySQL through `laravel/docker-compose.yml`, runs `scripts/smoke-test.sh` plus a contact
+form round trip, and on `main` pushes exactly the images it tested. It does not deploy them yet.
+
+```bash
+export APP_KEY="base64:$(openssl rand -base64 32)"
+docker compose -f laravel/docker-compose.yml up --build   # http://localhost:8081
+```
+
+See [laravel/README.md](laravel/README.md) for development without Docker.
+
 ## First-time setup
 
 1. Create the Terraform state bucket `kaarsmarttechs-terraform-state` in `eu-central-1`.

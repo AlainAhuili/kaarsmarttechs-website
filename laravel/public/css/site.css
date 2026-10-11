@@ -1,0 +1,615 @@
+/* Ported from the Astro site: src/styles/global.css plus the scoped styles of each component. */
+/* Fonts are linked separately from /fonts/ (self-hosted). */
+
+:root {
+  --paper: #e9edf1;
+  --panel: #f6f8fa;
+  --ink: #15202e;
+  --steel: #5a6878;
+  --rule: #c3cbd4;
+  --signal: #f2b705;
+  --teal: #0e6e6e;
+  --brick-red: #c8473a;
+  --brick-blue: #2e5fa8;
+
+  --display: "Archivo Variable", "Arial Narrow", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", Roboto, Arial, sans-serif;
+
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.375rem;
+  --step-2: 1.875rem;
+  --step-3: clamp(2.25rem, 5vw, 3.75rem);
+  --step-4: clamp(2.75rem, 8vw, 5.75rem);
+
+  --measure: 68ch;
+  --gutter: clamp(1.25rem, 4vw, 3rem);
+  --max: 76rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 100%;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: var(--step-0);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 125;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5em;
+  text-wrap: balance;
+}
+h1 {
+  font-size: var(--step-4);
+}
+h2 {
+  font-size: var(--step-3);
+}
+h3 {
+  font-size: var(--step-1);
+  font-variation-settings: "wdth" 110;
+  font-weight: 700;
+}
+
+p {
+  margin: 0 0 1em;
+  max-width: var(--measure);
+}
+
+a {
+  color: var(--teal);
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+}
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--signal);
+  outline-offset: 3px;
+}
+
+img,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.wrap {
+  max-width: var(--max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0.5rem;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.5rem 1rem;
+  z-index: 10;
+}
+.skip-link:focus {
+  left: 0.5rem;
+}
+
+.lead {
+  font-size: var(--step-1);
+  line-height: 1.45;
+  color: var(--steel);
+  max-width: 40ch;
+}
+
+.button {
+  display: inline-block;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--display);
+  font-variation-settings: "wdth" 112;
+  font-weight: 700;
+  padding: 0.85rem 1.4rem;
+  text-decoration: none;
+  border-bottom: 4px solid var(--signal);
+}
+.button:hover {
+  background: #22324a;
+}
+
+.section {
+  padding-block: clamp(3.5rem, 8vw, 6.5rem);
+}
+.section + .section {
+  border-top: 1px solid var(--rule);
+}
+
+.prose h2 {
+  font-size: var(--step-2);
+  margin-top: 1.6em;
+}
+.prose ul {
+  max-width: var(--measure);
+  padding-left: 1.2em;
+}
+.prose li {
+  margin-bottom: 0.4em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---- header ---------------------------------------------------------------- */
+.site-header {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+}
+.site-header .bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-block: 1rem;
+}
+.site-header .brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink);
+  text-decoration: none;
+  font-family: var(--display);
+  font-variation-settings: "wdth" 125;
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+.site-header ul {
+  display: flex;
+  gap: clamp(1rem, 3vw, 2rem);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.site-header nav a {
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 500;
+  padding-block: 0.3rem;
+  border-bottom: 3px solid transparent;
+}
+.site-header nav a:hover,
+.site-header nav a[aria-current="page"] {
+  border-bottom-color: var(--signal);
+}
+
+/* ---- footer ---------------------------------------------------------------- */
+.site-footer {
+  background: var(--ink);
+  color: #c9d2dc;
+  padding-block: 3rem 1.5rem;
+}
+.site-footer .cols {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.site-footer .name {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 125;
+  font-weight: 800;
+  color: #fff;
+  font-size: 1.2rem;
+  margin-bottom: 0.4rem;
+}
+.site-footer nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.site-footer a {
+  color: #fff;
+}
+.site-footer .fine {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #2c3b50;
+  font-size: var(--step--1);
+}
+
+/* ---- project rows (home, projects) ------------------------------------------ */
+.rows {
+  list-style: none;
+  margin: 1.5rem 0;
+  padding: 0;
+}
+.rows.bordered {
+  margin: 0;
+  border-bottom: 1px solid var(--rule);
+}
+.project-row {
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) 1fr;
+  gap: 1rem 2.5rem;
+  padding-block: 1.75rem;
+  border-top: 1px solid var(--rule);
+}
+.project-row[hidden] {
+  display: none;
+}
+.project-row .status {
+  display: inline-block;
+  font-weight: 500;
+  font-size: var(--step--1);
+  padding: 0.1rem 0.5rem;
+  border-left: 4px solid var(--signal);
+  background: var(--panel);
+}
+.project-row .cats {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--steel);
+  font-size: var(--step--1);
+}
+.project-row h3 {
+  margin-bottom: 0.35rem;
+}
+.project-row h3 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.project-row h3 a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--signal);
+  text-decoration-thickness: 3px;
+}
+.project-row p {
+  margin-bottom: 0.35rem;
+}
+.project-row .stack {
+  color: var(--steel);
+  font-size: var(--step--1);
+}
+@media (max-width: 40rem) {
+  .project-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- sorter animation ------------------------------------------------------- */
+.sorter {
+  margin: 0;
+  overflow: hidden;
+}
+.sorter svg {
+  display: block;
+  width: 100%;
+  min-width: 600px;
+}
+.sorter .bin-label {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 115;
+  font-weight: 700;
+  font-size: 22px;
+  fill: var(--ink);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sorter .brick {
+    animation: sort 7.2s linear infinite backwards;
+  }
+  .sorter .belt-marks {
+    animation: belt 0.9s linear infinite;
+  }
+}
+@keyframes sort {
+  0% {
+    transform: translate(-60px, 124px);
+    opacity: 0;
+  }
+  6% {
+    opacity: 1;
+  }
+  62% {
+    transform: translate(var(--x), 124px);
+  }
+  74% {
+    transform: translate(var(--x), 270px);
+  }
+  92% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--x), 270px);
+    opacity: 0;
+  }
+}
+@keyframes belt {
+  to {
+    transform: translateX(40px);
+  }
+}
+
+/* ---- home ------------------------------------------------------------------- */
+.hero {
+  padding-top: clamp(3rem, 8vw, 6rem);
+}
+.hero h1 {
+  max-width: 14ch;
+}
+.hero .line {
+  margin-top: clamp(1.5rem, 4vw, 3rem);
+}
+.disciplines {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  border-left: 1px solid var(--rule);
+}
+.disciplines li {
+  padding: 0.25rem 1.5rem 0.5rem;
+  border-right: 1px solid var(--rule);
+}
+.flagship {
+  background: var(--panel);
+}
+.flagship .split {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 3rem;
+  align-items: start;
+}
+.flagship .facts {
+  margin: 0;
+  border-top: 4px solid var(--signal);
+}
+.flagship .facts div {
+  padding-block: 0.9rem;
+  border-bottom: 1px solid var(--rule);
+}
+.flagship dt,
+.project dt {
+  color: var(--steel);
+  font-size: var(--step--1);
+}
+.flagship dd,
+.project dd {
+  margin: 0.2rem 0 0;
+  font-weight: 500;
+}
+.cta {
+  background: var(--ink);
+  color: var(--paper);
+}
+.cta .lead {
+  color: #c9d2dc;
+}
+.cta .button {
+  background: var(--signal);
+  color: var(--ink);
+  border-bottom-color: var(--paper);
+}
+@media (max-width: 48rem) {
+  .flagship .split {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- services --------------------------------------------------------------- */
+.services {
+  margin: 2.5rem 0;
+  border-top: 4px solid var(--signal);
+}
+.services div {
+  display: grid;
+  grid-template-columns: minmax(12rem, 22rem) 1fr;
+  gap: 0.5rem 2.5rem;
+  padding-block: 1.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+.services dt {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 110;
+  font-weight: 700;
+  font-size: var(--step-1);
+  line-height: 1.2;
+}
+.services dd {
+  margin: 0;
+  max-width: var(--measure);
+}
+@media (max-width: 40rem) {
+  .services div {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- projects list ---------------------------------------------------------- */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+.filters button {
+  font: inherit;
+  font-size: var(--step--1);
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+.filters button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+  box-shadow: inset 0 -4px 0 var(--signal);
+}
+.count {
+  color: var(--steel);
+  font-size: var(--step--1);
+  margin-top: 1rem;
+}
+
+/* ---- project case study ----------------------------------------------------- */
+.project .crumb {
+  font-size: var(--step--1);
+}
+.project h1 {
+  font-size: var(--step-3);
+  max-width: 20ch;
+}
+.project .facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  margin: 2rem 0;
+  border-top: 4px solid var(--signal);
+  border-bottom: 1px solid var(--rule);
+}
+.project .facts div,
+.project .metrics dl div {
+  padding: 0.9rem 1.25rem 0.9rem 0;
+}
+.project .metrics {
+  margin-top: 3rem;
+}
+.project .metrics h2 {
+  font-size: var(--step-2);
+}
+.project .metrics dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+}
+.project .metrics dl div {
+  background: var(--panel);
+  padding: 1.25rem;
+}
+.project .metrics dd {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 125;
+  font-weight: 800;
+  font-size: var(--step-2);
+}
+.project .metrics .pending dd {
+  color: var(--steel);
+  font-size: var(--step-1);
+  font-weight: 600;
+}
+.project .next {
+  margin-top: 3rem;
+}
+
+/* ---- contact (Laravel only) ------------------------------------------------- */
+.contact {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 3rem;
+  align-items: start;
+}
+.contact-direct {
+  border-top: 4px solid var(--signal);
+  padding-top: 1rem;
+}
+.contact-direct h2 {
+  font-size: var(--step-1);
+}
+.contact-form {
+  max-width: 38rem;
+  margin-top: 2rem;
+}
+.contact-form .field {
+  margin-bottom: 1.25rem;
+}
+.contact-form label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+}
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-bottom: 2px solid var(--steel);
+  padding: 0.6rem 0.75rem;
+}
+.contact-form input:focus,
+.contact-form textarea:focus {
+  border-bottom-color: var(--signal);
+}
+.contact-form [aria-invalid="true"] {
+  border-bottom-color: var(--brick-red);
+}
+.contact-form .button {
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  cursor: pointer;
+}
+.field-error,
+.form-error {
+  color: var(--brick-red);
+  font-weight: 500;
+  font-size: var(--step--1);
+  margin: 0.35rem 0 0;
+}
+.form-error {
+  margin-bottom: 1rem;
+}
+.fine-print {
+  color: var(--steel);
+  font-size: var(--step--1);
+}
+.notice {
+  margin-top: 2rem;
+  padding: 1rem 1.25rem;
+  background: var(--panel);
+  border-left: 4px solid var(--teal);
+  font-weight: 500;
+}
+/* Honeypot: off-screen rather than display:none, which some bots detect. */
+.hp {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+@media (max-width: 48rem) {
+  .contact {
+    grid-template-columns: 1fr;
+  }
+}

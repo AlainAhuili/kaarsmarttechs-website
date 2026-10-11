@@ -4,3 +4,4 @@ dist
 .git
 infra
 k8s
+laravel

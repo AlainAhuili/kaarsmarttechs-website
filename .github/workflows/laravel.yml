@@ -1,0 +1,215 @@
+# Second release artifact: the site as a Laravel app (PHP-FPM + nginx) backed by MySQL.
+#
+#   commit stage (Pint, PHPUnit on MySQL) ─▶ build and scan both images ─▶ compose smoke test
+#                                                                         ─▶ push (main only)
+#
+# The images that pass the scan and the smoke test are the ones pushed: they are re-tagged, not
+# rebuilt. Deployment is not part of this workflow yet.
+name: laravel
+
+on:
+  pull_request:
+    paths:
+      - "laravel/**"
+      - "src/content/projects/**"
+      - "docker/security-headers.conf"
+      - "package-lock.json"
+      - "scripts/smoke-test.sh"
+      - ".github/workflows/laravel.yml"
+  push:
+    branches: [main]
+    paths:
+      - "laravel/**"
+      - "src/content/projects/**"
+      - "docker/security-headers.conf"
+      - "package-lock.json"
+      - "scripts/smoke-test.sh"
+      - ".github/workflows/laravel.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: laravel-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  APP_IMAGE: ghcr.io/alainahuili/website-laravel-app # registry paths must be lowercase
+  WEB_IMAGE: ghcr.io/alainahuili/website-laravel-web
+
+jobs:
+  # ---------------------------------------------------------------- commit stage
+  verify:
+    name: Lint and test (Laravel)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: laravel
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: website_test
+          MYSQL_USER: website
+          MYSQL_PASSWORD: ci-only-password
+          MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3306"
+      DB_DATABASE: website_test
+      DB_USERNAME: website
+      DB_PASSWORD: ci-only-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: pdo_mysql
+          coverage: none
+          tools: composer:v2
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist
+          cp .env.example .env
+      - name: Code style (Pint)
+        run: vendor/bin/pint --test
+      - name: Tests against MySQL
+        run: php artisan test
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: composer-lock
+          path: laravel/composer.lock
+          retention-days: 7
+
+  # --------------------------------------------------- build, scan, smoke-test, push
+  images:
+    name: Build, scan, smoke-test images
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    env:
+      LARAVEL_APP_IMAGE: ghcr.io/alainahuili/website-laravel-app:scan
+      LARAVEL_WEB_IMAGE: ghcr.io/alainahuili/website-laravel-web:scan
+      DB_PASSWORD: ci-only-password
+    outputs:
+      app: ${{ steps.push.outputs.app }}
+      web: ${{ steps.push.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v4
+      - name: Build app image (PHP-FPM)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: laravel/Dockerfile
+          target: app
+          load: true
+          tags: ${{ env.LARAVEL_APP_IMAGE }}
+          build-args: VERSION=${{ github.sha }}
+          cache-from: type=gha,scope=laravel-app
+          cache-to: type=gha,scope=laravel-app,mode=max
+      - name: Build web image (nginx)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: laravel/Dockerfile
+          target: web
+          load: true
+          tags: ${{ env.LARAVEL_WEB_IMAGE }}
+          build-args: VERSION=${{ github.sha }}
+          cache-from: type=gha,scope=laravel-web
+          cache-to: type=gha,scope=laravel-web,mode=max
+      - name: Vulnerability scan, app (fails on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.LARAVEL_APP_IMAGE }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Vulnerability scan, web (fails on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.LARAVEL_WEB_IMAGE }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          skip-setup-trivy: true
+
+      - name: Start Laravel, nginx and MySQL
+        working-directory: laravel
+        run: |
+          # One key for every later step: compose needs it to read the file, even for exec/logs.
+          key="base64:$(openssl rand -base64 32)"
+          echo "::add-mask::$key"
+          echo "APP_KEY=$key" >> "$GITHUB_ENV"
+          APP_KEY="$key" docker compose up -d --no-build
+          for _ in $(seq 1 60); do
+            [ "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/up)" = 200 ] && exit 0
+            sleep 2
+          done
+          echo "The app did not become healthy" && exit 1
+      - name: Smoke test (same checks as the Astro environments)
+        run: ./scripts/smoke-test.sh http://localhost:8081 "${{ github.sha }}"
+      - name: Content pages set no cookies
+        run: |
+          for path in / /projects/ /projects/lego-sorting-system/ /impressum/; do
+            if curl -sI "http://localhost:8081$path" | grep -qi '^set-cookie:'; then
+              echo "FAIL  $path sets a cookie" && exit 1
+            fi
+          done
+          echo "PASS  no cookies outside /contact/"
+      - name: Contact form stores a message in MySQL
+        working-directory: laravel
+        run: |
+          jar="$(mktemp)"
+          token="$(curl -s -c "$jar" http://localhost:8081/contact/ | sed -n 's/.*name="_token" value="\([^"]*\)".*/\1/p' | head -1)"
+          status="$(curl -s -o /dev/null -w '%{http_code}' -b "$jar" -c "$jar" \
+            --data-urlencode "_token=$token" --data-urlencode "name=CI" \
+            --data-urlencode "email=ci-${{ github.run_id }}@example.com" \
+            --data-urlencode "message=Smoke test message from the pipeline." \
+            http://localhost:8081/contact/)"
+          test "$status" = 302 || { echo "FAIL  POST /contact/ returned $status"; exit 1; }
+          stored="$(docker compose exec -T mysql mysql -N -u website -p"$DB_PASSWORD" website \
+            -e "SELECT COUNT(*) FROM contact_messages WHERE email = 'ci-${{ github.run_id }}@example.com'")"
+          test "$stored" = 1 || { echo "FAIL  message not stored ($stored rows)"; exit 1; }
+          echo "PASS  contact form round trip"
+      - name: Show container logs
+        if: failure()
+        working-directory: laravel
+        run: docker compose logs --no-color
+      - name: Stop the stack
+        if: always()
+        working-directory: laravel
+        run: docker compose down -v
+
+      - uses: docker/login-action@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push the tested images
+        id: push
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          for kind in app web; do
+            if [ "$kind" = app ]; then src="$LARAVEL_APP_IMAGE" repo="$APP_IMAGE"; else src="$LARAVEL_WEB_IMAGE" repo="$WEB_IMAGE"; fi
+            for tag in "sha-$GITHUB_SHA" main; do
+              docker tag "$src" "$repo:$tag"
+              docker push --quiet "$repo:$tag"
+            done
+            digest="$(docker inspect --format '{{index .RepoDigests 0}}' "$repo:sha-$GITHUB_SHA")"
+            echo "$kind=$digest" >> "$GITHUB_OUTPUT"
+            echo "Pushed $digest"
+          done
