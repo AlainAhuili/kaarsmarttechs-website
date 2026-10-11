@@ -1,0 +1,101 @@
+# Laravel + nginx + MySQL, production-like:
+#
+#   export APP_KEY="base64:$(openssl rand -base64 32)"
+#   docker compose -f laravel/docker-compose.yml up --build    # then open http://localhost:8081
+#
+# CI runs the same stack against the images it just built (LARAVEL_APP_IMAGE, LARAVEL_WEB_IMAGE).
+name: website-laravel
+
+x-app-build: &app-build
+  context: ..
+  dockerfile: laravel/Dockerfile
+  target: app
+  args:
+    VERSION: local
+
+x-app-env: &app-env
+  APP_NAME: Kaar Smart Techs
+  APP_ENV: production
+  APP_DEBUG: "false"
+  APP_KEY: ${APP_KEY:?Set APP_KEY, see the top of laravel/docker-compose.yml}
+  APP_URL: ${APP_URL:-http://localhost:8081}
+  DB_CONNECTION: mysql
+  DB_HOST: mysql
+  DB_PORT: "3306"
+  DB_DATABASE: website
+  DB_USERNAME: website
+  DB_PASSWORD: ${DB_PASSWORD:-local-only-password}
+  SESSION_DRIVER: database
+  SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-false} # true behind HTTPS
+  CACHE_STORE: database
+  QUEUE_CONNECTION: sync
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: website
+      MYSQL_USER: website
+      MYSQL_PASSWORD: ${DB_PASSWORD:-local-only-password}
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", 'mysqladmin ping -h 127.0.0.1 -u website -p"$$MYSQL_PASSWORD" --silent']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # One-shot: create/upgrade the schema and sync projects from src/content/projects.
+  migrate:
+    image: ${LARAVEL_APP_IMAGE:-website-laravel-app:local}
+    build: *app-build
+    command: ["sh", "-c", "php artisan migrate --force && php artisan db:seed --force"]
+    environment: *app-env
+    read_only: true
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  app:
+    image: ${LARAVEL_APP_IMAGE:-website-laravel-app:local}
+    build: *app-build
+    environment: *app-env
+    read_only: true
+    tmpfs:
+      - /tmp
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # Runs scheduled tasks, e.g. deleting contact messages past the retention period.
+  scheduler:
+    image: ${LARAVEL_APP_IMAGE:-website-laravel-app:local}
+    build: *app-build
+    command: ["php", "artisan", "schedule:work"]
+    environment: *app-env
+    read_only: true
+    tmpfs:
+      - /tmp
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    image: ${LARAVEL_WEB_IMAGE:-website-laravel-web:local}
+    build:
+      context: ..
+      dockerfile: laravel/Dockerfile
+      target: web
+      args:
+        VERSION: local
+    ports:
+      - "8081:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    depends_on:
+      - app
+
+volumes:
+  mysql_data:
