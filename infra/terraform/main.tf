@@ -6,7 +6,7 @@ locals {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.13"
+  version = "~> 6.7"
 
   name            = "${var.cluster_name}-vpc"
   cidr            = "10.20.0.0/16"
@@ -23,13 +23,13 @@ module "vpc" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.24"
+  version = "~> 21.29"
 
-  cluster_name                   = var.cluster_name
-  cluster_version                = "1.31"
-  cluster_endpoint_public_access = true
-  vpc_id                         = module.vpc.vpc_id
-  subnet_ids                     = module.vpc.private_subnets
+  name                   = var.cluster_name
+  kubernetes_version     = "1.36" # standard support until 2027-08-02; 1.31 is in paid extended support
+  endpoint_public_access = true
+  vpc_id                 = module.vpc.vpc_id
+  subnet_ids             = module.vpc.private_subnets
 
   enable_cluster_creator_admin_permissions = true
 
