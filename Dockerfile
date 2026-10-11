@@ -12,6 +12,9 @@ RUN echo "$VERSION" > dist/version.txt
 
 # ---- runtime stage: static files only, non-root nginx --------------------------
 FROM nginxinc/nginx-unprivileged:1.31.6-alpine
+# pick up Alpine security fixes published after the base image was built
+USER root
+RUN apk upgrade --no-cache
 ARG VERSION=dev
 LABEL org.opencontainers.image.title="kaarsmarttechs-website" \
       org.opencontainers.image.source="https://github.com/kaarsmarttechs/website" \
