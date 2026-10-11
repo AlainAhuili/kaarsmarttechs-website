@@ -40,6 +40,7 @@ jobs:
         run: kustomize edit set image ghcr.io/kaarsmarttechs/website=${{ inputs.image }}
 
       - name: Apply manifests
+        id: apply
         run: kustomize build k8s/overlays/${{ inputs.environment }} | kubectl apply -f -
 
       - name: Wait for rollout
@@ -49,7 +50,8 @@ jobs:
         run: ./scripts/smoke-test.sh "${{ inputs.url }}" "${{ github.sha }}"
 
       - name: Roll back on failure
-        if: failure()
+        # only when something reached the cluster; an earlier failure leaves nothing to undo
+        if: failure() && steps.apply.outcome != 'skipped'
         run: |
           kubectl -n website-${{ inputs.environment }} rollout undo deployment/website
           kubectl -n website-${{ inputs.environment }} rollout status deployment/website --timeout=180s
