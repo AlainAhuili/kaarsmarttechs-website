@@ -12,5 +12,5 @@ variable "cluster_name" {
 variable "github_repository" {
   description = "Repository allowed to deploy, as owner/name."
   type        = string
-  default     = "kaarsmarttechs/website"
+  default     = "AlainAhuili/kaarsmarttechs-website"
 }
