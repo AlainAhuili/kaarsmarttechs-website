@@ -5,6 +5,13 @@ updates:
     schedule: { interval: weekly }
     groups:
       astro: { patterns: ["astro", "@astrojs/*"] }
+    ignore:
+      # @astrojs/check only supports TypeScript 5 and 6.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # Types must match the Node version in .nvmrc; bump them together by hand.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
