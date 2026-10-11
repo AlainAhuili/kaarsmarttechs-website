@@ -38,12 +38,13 @@ WORKDIR /var/www/html
 COPY --from=vendor /app ./
 # config/site.php reads ../src/content/projects relative to the app.
 COPY src/content/projects /var/www/src/content/projects
-ENV LOG_CHANNEL=stderr
+# The container filesystem is read-only: log to stderr and compile Blade views into /tmp, which
+# is a tmpfs in docker-compose.yml (an emptyDir on Kubernetes). Packages are discovered at build time.
+ENV LOG_CHANNEL=stderr \
+    VIEW_COMPILED_PATH=/tmp/views
 ARG VERSION=dev
-# Discover packages and precompile views at build time: the container filesystem is read-only.
-RUN mkdir -p bootstrap/cache storage/framework/views \
+RUN mkdir -p bootstrap/cache \
  && php artisan package:discover --ansi \
- && php artisan view:cache \
  && echo "$VERSION" > public/version.txt
 USER www-data
 EXPOSE 9000

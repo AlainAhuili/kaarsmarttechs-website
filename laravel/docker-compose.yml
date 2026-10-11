@@ -53,6 +53,8 @@ services:
     command: ["sh", "-c", "php artisan migrate --force && php artisan db:seed --force"]
     environment: *app-env
     read_only: true
+    tmpfs:
+      - /tmp
     depends_on:
       mysql:
         condition: service_healthy
