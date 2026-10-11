@@ -75,7 +75,9 @@ jobs:
           coverage: none
           tools: composer:v2
       - name: Install dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist
+          cp .env.example .env
       - name: Code style (Pint)
         run: vendor/bin/pint --test
       - name: Tests against MySQL

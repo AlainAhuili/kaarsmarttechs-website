@@ -14,7 +14,13 @@ class PagesTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected $seed = true;
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Seeded per test (inside its transaction): $seed only seeds on the first migration.
+        $this->seed();
+    }
 
     public static function pages(): array
     {

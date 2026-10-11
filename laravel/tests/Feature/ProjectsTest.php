@@ -11,7 +11,13 @@ class ProjectsTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected $seed = true;
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Seeded per test (inside its transaction): $seed only seeds on the first migration.
+        $this->seed();
+    }
 
     public function test_seeder_loads_every_markdown_entry(): void
     {

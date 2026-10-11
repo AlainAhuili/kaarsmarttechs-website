@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -11,9 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
-        // Content pages are stateless: no session and no cookies.
+        // Content pages are stateless: no session and no cookies. They still need route model
+        // binding, which is otherwise part of the "web" group.
         then: function () {
-            Route::group([], base_path('routes/pages.php'));
+            Route::middleware(SubstituteBindings::class)->group(base_path('routes/pages.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
