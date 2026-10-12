@@ -9,8 +9,11 @@ variable "cluster_name" {
   default = "kst-platform"
 }
 
-variable "github_repository" {
-  description = "Repository allowed to deploy, as owner/name."
+variable "github_oidc_subject_prefix" {
+  description = <<-EOT
+    Subject prefix of the repository's GitHub OIDC tokens. The repository uses immutable subjects
+    (owner@id/name@id), shown by `gh api repos/OWNER/REPO/actions/oidc/customization/sub`.
+  EOT
   type        = string
-  default     = "AlainAhuili/kaarsmarttechs-website"
+  default     = "repo:AlainAhuili@85407672/kaarsmarttechs-website@1287517030"
 }
