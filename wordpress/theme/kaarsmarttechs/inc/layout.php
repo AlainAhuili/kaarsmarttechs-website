@@ -37,7 +37,8 @@ function kaar_layout_open(string $title, string $description, array $scripts = [
     <title><?= esc_html($full_title) ?></title>
     <meta name="description" content="<?= esc_attr($description) ?>">
     <link rel="canonical" href="<?= esc_url($canonical) ?>">
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta property="og:title" content="<?= esc_attr($full_title) ?>">
     <meta property="og:description" content="<?= esc_attr($description) ?>">
     <meta property="og:type" content="website">
@@ -78,11 +79,7 @@ function kaar_site_header(): void
     <header class="site-header">
       <div class="wrap bar">
         <a class="brand" href="/" aria-label="Kaar Smart Techs, home">
-          <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-            <rect x="1" y="9" width="26" height="18" fill="#15202e"></rect>
-            <rect x="5" y="4" width="7" height="5" fill="#15202e"></rect>
-            <rect x="16" y="4" width="7" height="5" fill="#f2b705"></rect>
-          </svg>
+          <img src="/logo.png" width="38" height="32" alt="">
           <span>Kaar Smart Techs</span>
         </a>
         <nav aria-label="Main">

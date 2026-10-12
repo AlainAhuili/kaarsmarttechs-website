@@ -87,7 +87,7 @@ COPY docker/security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY wordpress/docker/admin-headers.conf wordpress/docker/fastcgi-wordpress.conf /etc/nginx/snippets/
 COPY --from=app /var/www/html /var/www/html
 COPY --from=fonts /build/out /var/www/html/fonts
-COPY public/favicon.svg public/robots.txt /var/www/html/
+COPY public/logo.png public/favicon.png public/apple-touch-icon.png public/robots.txt /var/www/html/
 ARG VERSION=dev
 # Uploads belong to www-data (82), as in the app image, whichever container mounts the volume first.
 RUN echo "$VERSION" > /var/www/html/version.txt \
