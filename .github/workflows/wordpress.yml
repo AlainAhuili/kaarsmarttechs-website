@@ -1,0 +1,242 @@
+# Release artifact: the site on WordPress (PHP-FPM) + nginx + FastAPI, backed by MariaDB.
+#
+#   commit stage (Ruff, pytest on MariaDB, PHP lint) ─▶ build and scan the three images
+#                                                     ─▶ compose smoke test ─▶ push (main only)
+#
+# The images that pass the scan and the smoke test are the ones pushed: they are re-tagged, not
+# rebuilt. Deployment is not part of this workflow yet.
+name: wordpress
+
+on:
+  pull_request:
+    paths:
+      - "wordpress/**"
+      - "src/content/projects/**"
+      - "docker/security-headers.conf"
+      - "public/favicon.svg"
+      - "public/robots.txt"
+      - "package-lock.json"
+      - "scripts/smoke-test.sh"
+      - ".github/workflows/wordpress.yml"
+  push:
+    branches: [main]
+    paths:
+      - "wordpress/**"
+      - "src/content/projects/**"
+      - "docker/security-headers.conf"
+      - "public/favicon.svg"
+      - "public/robots.txt"
+      - "package-lock.json"
+      - "scripts/smoke-test.sh"
+      - ".github/workflows/wordpress.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: wordpress-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io/alainahuili # registry paths must be lowercase
+
+jobs:
+  # ---------------------------------------------------------------- commit stage
+  verify:
+    name: Lint and test (WordPress + FastAPI)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_DATABASE: api_test
+          MARIADB_USER: api
+          MARIADB_PASSWORD: ci-only-password
+          MARIADB_RANDOM_ROOT_PASSWORD: "yes"
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: wordpress/api/requirements-dev.txt
+      - name: Install API dependencies
+        working-directory: wordpress/api
+        run: pip install -r requirements-dev.txt
+      - name: Code style (Ruff)
+        working-directory: wordpress
+        run: |
+          ruff check api tests
+          ruff format --check api tests
+      - name: API tests against MariaDB
+        working-directory: wordpress/api
+        env:
+          TEST_DATABASE_URL: mysql+pymysql://api:ci-only-password@127.0.0.1:3306/api_test?charset=utf8mb4
+        run: python -m pytest
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          coverage: none
+          tools: none
+      - name: PHP syntax (theme, config, setup)
+        working-directory: wordpress
+        run: find . -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Shell syntax (setup)
+        run: sh -n wordpress/bin/kaar-setup
+
+  # --------------------------------------------------- build, scan, smoke-test, push
+  images:
+    name: Build, scan, smoke-test images
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+    env:
+      WORDPRESS_APP_IMAGE: ghcr.io/alainahuili/website-wordpress-app:scan
+      WORDPRESS_API_IMAGE: ghcr.io/alainahuili/website-wordpress-api:scan
+      WORDPRESS_WEB_IMAGE: ghcr.io/alainahuili/website-wordpress-web:scan
+      WORDPRESS_DB_PASSWORD: ci-only-password
+      API_DB_PASSWORD: ci-only-api-password
+    outputs:
+      app: ${{ steps.push.outputs.app }}
+      api: ${{ steps.push.outputs.api }}
+      web: ${{ steps.push.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v4
+      - name: Build app image (WordPress, PHP-FPM)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: wordpress/Dockerfile
+          target: app
+          load: true
+          tags: ${{ env.WORDPRESS_APP_IMAGE }}
+          build-args: VERSION=${{ github.sha }}
+          cache-from: type=gha,scope=wordpress-app
+          cache-to: type=gha,scope=wordpress-app,mode=max
+      - name: Build api image (FastAPI)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: wordpress/Dockerfile
+          target: api
+          load: true
+          tags: ${{ env.WORDPRESS_API_IMAGE }}
+          build-args: VERSION=${{ github.sha }}
+          cache-from: type=gha,scope=wordpress-api
+          cache-to: type=gha,scope=wordpress-api,mode=max
+      - name: Build web image (nginx)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: wordpress/Dockerfile
+          target: web
+          load: true
+          tags: ${{ env.WORDPRESS_WEB_IMAGE }}
+          build-args: VERSION=${{ github.sha }}
+          cache-from: type=gha,scope=wordpress-web
+          cache-to: type=gha,scope=wordpress-web,mode=max
+      - name: Vulnerability scan, app (fails on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.WORDPRESS_APP_IMAGE }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Vulnerability scan, api (fails on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.WORDPRESS_API_IMAGE }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          skip-setup-trivy: true
+      - name: Vulnerability scan, web (fails on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.WORDPRESS_WEB_IMAGE }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          skip-setup-trivy: true
+
+      - name: Start WordPress, FastAPI, nginx and MariaDB
+        working-directory: wordpress
+        run: |
+          # One set of secrets for every later step: compose needs them to read the file, even for exec/logs.
+          for name in WORDPRESS_SECRET API_SECRET WORDPRESS_ADMIN_PASSWORD; do
+            value="$(openssl rand -hex 24)"
+            echo "::add-mask::$value"
+            echo "$name=$value" >> "$GITHUB_ENV"
+            export "$name=$value"
+          done
+          docker compose up -d --no-build
+          for _ in $(seq 1 60); do
+            [ "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8082/projects/)" = 200 ] && exit 0
+            sleep 2
+          done
+          echo "The site did not become healthy" && exit 1
+      - name: Smoke test (same checks as the Astro environments)
+        run: ./scripts/smoke-test.sh http://localhost:8082 "${{ github.sha }}"
+      - name: Quality gate (titles, one h1, legal links, links, CSP, third parties, cookies)
+        run: python3 wordpress/tests/site_check.py http://localhost:8082
+      - name: API health and version
+        run: |
+          test "$(curl -s http://localhost:8082/api/health)" = '{"status":"ok","version":"${{ github.sha }}"}'
+      - name: Public WordPress surface is closed
+        run: |
+          for path in /xmlrpc.php /wp-config.php /readme.html /wp-cron.php "/?author=1" /feed/ /wp-json/wp/v2/users; do
+            status="$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:8082$path")"
+            case "$status" in 401|404) echo "PASS  $path ($status)";; *) echo "FAIL  $path returned $status"; exit 1;; esac
+          done
+      - name: Contact form stores a message in MariaDB
+        working-directory: wordpress
+        run: |
+          email="ci-${{ github.run_id }}@example.com"
+          location="$(curl -s -o /dev/null -w '%{redirect_url}' -H 'Origin: http://localhost:8082' \
+            --data-urlencode "name=CI" --data-urlencode "email=$email" \
+            --data-urlencode "message=Smoke test message from the pipeline." \
+            http://localhost:8082/api/contact)"
+          test "$location" = "http://localhost:8082/contact/?sent=1#contact-form" || { echo "FAIL  redirect to $location"; exit 1; }
+          stored="$(docker compose exec -T mariadb mariadb -N -u api -p"$API_DB_PASSWORD" api \
+            -e "SELECT COUNT(*) FROM contact_messages WHERE email = '$email'")"
+          test "$stored" = 1 || { echo "FAIL  message not stored ($stored rows)"; exit 1; }
+          echo "PASS  contact form round trip"
+      - name: Show container logs
+        if: failure()
+        working-directory: wordpress
+        run: docker compose logs --no-color
+      - name: Stop the stack
+        if: always()
+        working-directory: wordpress
+        run: docker compose down -v
+
+      - uses: docker/login-action@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push the tested images
+        id: push
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          for kind in app api web; do
+            src="$REGISTRY/website-wordpress-$kind:scan" repo="$REGISTRY/website-wordpress-$kind"
+            for tag in "sha-$GITHUB_SHA" main; do
+              docker tag "$src" "$repo:$tag"
+              docker push --quiet "$repo:$tag"
+            done
+            digest="$(docker inspect --format '{{index .RepoDigests 0}}' "$repo:sha-$GITHUB_SHA")"
+            echo "$kind=$digest" >> "$GITHUB_OUTPUT"
+            echo "Pushed $digest"
+          done

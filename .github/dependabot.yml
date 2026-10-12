@@ -18,6 +18,12 @@ updates:
   - package-ecosystem: docker
     directory: /
     schedule: { interval: weekly }
+  - package-ecosystem: pip
+    directory: /wordpress/api
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directory: /wordpress
+    schedule: { interval: weekly }
   - package-ecosystem: terraform
     directory: /infra/terraform
     schedule: { interval: monthly }

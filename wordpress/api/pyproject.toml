@@ -1,0 +1,10 @@
+[project]
+name = "kaarsmarttechs-api"
+version = "1.0.0"
+description = "Projects and contact form API behind the WordPress release of kaarsmarttechs.com"
+requires-python = ">=3.14"
+
+# Ruff is configured in ../ruff.toml.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

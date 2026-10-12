@@ -3,3 +3,4 @@ node_modules
 .astro
 package-lock.json
 infra/terraform/.terraform
+wordpress

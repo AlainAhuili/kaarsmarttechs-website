@@ -42,3 +42,18 @@ silently broken the project filter in production, so the build emits all scripts
 post-build test rejects inline scripts. Security headers live in one nginx snippet included in every
 location, because nginx drops server-level `add_header` directives in any location that sets its
 own; the smoke test checks the headers on the live site.
+
+## 7. A release artifact on WordPress, FastAPI and MariaDB
+
+The static site cannot accept input, and changing the legal pages needs a developer and a release.
+The WordPress artifact lets editors maintain pages themselves and adds a contact form. WordPress
+only renders pages: structured data lives behind a FastAPI service, which validates the project
+entries with the Astro schema's rules, syncs them from `src/content/projects` on every deployment
+and serves them as JSON, so the portfolio stays identical across artifacts and is available to
+future clients such as the sorter dashboard. Each service has its own MariaDB database and user.
+To keep the GDPR and CSP guarantees, the theme strips WordPress's inline scripts and styles, the
+contact form works without a session or cookie, WordPress makes no outgoing requests, code is
+baked into the image (no plugin installs or updates from the admin) and everything public beyond
+the pages is closed. **Consequence:** WordPress and plugin updates are image updates through the
+pipeline; the admin runs under a looser CSP of its own; uploaded media need a shared volume; the
+privacy policy must mention the form, and both databases need backups once they hold real data.
