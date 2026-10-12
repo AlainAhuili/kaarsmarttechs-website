@@ -33,6 +33,22 @@ module "eks" {
 
   enable_cluster_creator_admin_permissions = true
 
+  # EBS volumes for stateful workloads (MariaDB and uploads of the WordPress release). The gp3
+  # StorageClass itself is applied once from infra/kubernetes/storageclass-gp3.yaml.
+  addons = {
+    # Module 21 no longer bootstraps the default add-ons: without vpc-cni, nodes stay NotReady.
+    vpc-cni                = { before_compute = true }
+    kube-proxy             = { before_compute = true }
+    coredns                = {}
+    eks-pod-identity-agent = { before_compute = true }
+    aws-ebs-csi-driver = {
+      pod_identity_association = [{
+        role_arn        = module.ebs_csi_pod_identity.iam_role_arn
+        service_account = "ebs-csi-controller-sa"
+      }]
+    }
+  }
+
   eks_managed_node_groups = {
     general = {
       instance_types = ["t3.medium"]
@@ -59,11 +75,20 @@ module "eks" {
   }
 }
 
+module "ebs_csi_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 2.9"
+
+  name                      = "${var.cluster_name}-ebs-csi"
+  attach_aws_ebs_csi_policy = true
+}
+
 # ---- Keyless CI/CD: GitHub Actions assumes this role through OIDC ---------------
-resource "aws_iam_openid_connect_provider" "github" {
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+# An AWS account holds one provider per URL and this one is shared with other GitHub workflows,
+# so it is looked up, not owned: `terraform destroy` must not remove it. Create it once by hand
+# (IAM > Identity providers, audience sts.amazonaws.com) in a fresh account.
+data "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
 }
 
 data "aws_iam_policy_document" "github_trust" {
@@ -71,7 +96,7 @@ data "aws_iam_policy_document" "github_trust" {
     actions = ["sts:AssumeRoleWithWebIdentity"]
     principals {
       type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github.arn]
+      identifiers = [data.aws_iam_openid_connect_provider.github.arn]
     }
     condition {
       test     = "StringEquals"

@@ -1,0 +1,21 @@
+# Values for the ingress-nginx chart:
+#
+#   helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx \
+#     --create-namespace -f infra/helm/ingress-nginx.yaml
+controller:
+  replicaCount: 2
+  # One controller per node (zone), so each node behind the NLB serves its own traffic.
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: DoNotSchedule
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+          app.kubernetes.io/component: controller
+  service:
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    # The node security group only allows node-to-node traffic on ports 1025-65535, so a NodePort
+    # must not forward to a controller (ports 80/443) on another node. Local also keeps client IPs.
+    externalTrafficPolicy: Local

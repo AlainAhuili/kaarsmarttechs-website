@@ -1,0 +1,12 @@
+# Python code style for the API (api/) and the live quality gate (tests/).
+line-length = 110
+target-version = "py314"
+src = ["api"] # so imports of "app" sort as first-party
+
+[lint]
+select = ["E", "F", "I", "B", "UP", "S", "SIM"]
+ignore = ["B008"] # FastAPI's Form() defaults
+
+[lint.per-file-ignores]
+"api/tests/*" = ["S101", "S105", "S106"]
+"tests/site_check.py" = ["S310"] # urlopen on a URL given on the command line

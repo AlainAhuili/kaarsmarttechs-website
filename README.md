@@ -65,16 +65,49 @@ Add a portfolio project by creating `src/content/projects/<slug>.md`; the schema
 or invalid fields at build time. Leave a metric's `value` empty until it is measured: the page
 shows "Measuring" instead of an estimate.
 
+## Release artifact: WordPress + nginx + FastAPI + MariaDB
+
+`wordpress/` contains the same site on WordPress 7.1 (PHP 8.5), with a FastAPI service (Python
+3.14) for project data and the contact form, behind nginx and backed by MariaDB 11.8. WordPress
+renders the pages and lets editors change the Impressum and privacy policy without a release;
+FastAPI syncs the project entries from `src/content/projects` into MariaDB, serves them to the
+theme and stores contact form messages (deleted after 180 days). No page sets a cookie for visitors.
+
+It ships as three images built from `wordpress/Dockerfile`, with the repository root as build
+context:
+
+- `ghcr.io/alainahuili/website-wordpress-app`: WordPress on PHP-FPM, with WP-CLI for the setup job
+- `ghcr.io/alainahuili/website-wordpress-api`: FastAPI on uvicorn
+- `ghcr.io/alainahuili/website-wordpress-web`: nginx serving static files and routing to both
+
+The `wordpress.yml` workflow runs Ruff and pytest against MariaDB and lints the PHP, builds and
+scans the three images, starts them with MariaDB through `wordpress/docker-compose.yml`, runs
+`scripts/smoke-test.sh`, the post-build quality gate against the live pages and a contact form
+round trip, and on `main` pushes exactly the images it tested. It does not deploy them yet.
+
+```bash
+export WORDPRESS_SECRET="$(openssl rand -base64 32)" API_SECRET="$(openssl rand -base64 32)"
+export WORDPRESS_ADMIN_PASSWORD="$(openssl rand -base64 18)"
+docker compose -f wordpress/docker-compose.yml up --build   # http://localhost:8082
+```
+
+See [wordpress/README.md](wordpress/README.md) for the architecture and configuration.
+
 ## First-time setup
 
 1. Create the Terraform state bucket `kaarsmarttechs-terraform-state` in `eu-central-1`.
-2. `cd infra/terraform && terraform init && terraform apply` (creates VPC, EKS and the deploy role;
+2. Make sure the account has the GitHub OIDC identity provider (`token.actions.githubusercontent.com`,
+   audience `sts.amazonaws.com`); Terraform looks it up instead of owning it, since it is shared.
+3. `cd infra/terraform && terraform init && terraform apply` (creates VPC, EKS and the deploy role;
    EKS with a NAT gateway and two t3.medium nodes costs roughly in the low hundreds of euros per month).
-3. Install cluster add-ons: ingress-nginx and cert-manager with a `letsencrypt` ClusterIssuer.
-4. In GitHub, create environments `staging` and `production`; add required reviewers to
+4. Install ingress-nginx with `infra/helm/ingress-nginx.yaml` (see the command in that file) and
+   cert-manager (Helm, `crds.enabled=true`), then apply the cluster-scoped resources the deploy
+   role may not create: `kubectl apply -f infra/kubernetes/` (namespaces, `letsencrypt` ClusterIssuer,
+   gp3 StorageClass).
+5. In GitHub, create environments `staging` and `production`; add required reviewers to
    `production`; add the secret `AWS_DEPLOY_ROLE_ARN` (Terraform output `deployer_role_arn`).
-5. Point DNS for `kaarsmarttechs.com` and `staging.kaarsmarttechs.com` to the ingress load balancer.
-6. Protect `main`: require the `Lint, test, build` check and a pull request review.
+6. Point DNS for `kaarsmarttechs.com` and `staging.kaarsmarttechs.com` to the ingress load balancer.
+7. Protect `main`: require the `Lint, test, build` check and a pull request review.
 
 ## Before going live
 

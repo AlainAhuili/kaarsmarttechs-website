@@ -1,0 +1,135 @@
+# WordPress + nginx + FastAPI + MariaDB, production-like:
+#
+#   export WORDPRESS_SECRET="$(openssl rand -base64 32)" API_SECRET="$(openssl rand -base64 32)"
+#   export WORDPRESS_ADMIN_PASSWORD="$(openssl rand -base64 18)"
+#   docker compose -f wordpress/docker-compose.yml up --build    # then open http://localhost:8082
+#
+# CI runs the same stack against the images it just built (WORDPRESS_APP_IMAGE, WORDPRESS_API_IMAGE,
+# WORDPRESS_WEB_IMAGE).
+name: website-wordpress
+
+x-build: &build
+  context: ..
+  dockerfile: wordpress/Dockerfile
+  args:
+    VERSION: local
+
+x-app: &app
+  image: ${WORDPRESS_APP_IMAGE:-website-wordpress-app:local}
+  build:
+    <<: *build
+    target: app
+  environment: &app-env
+    WORDPRESS_URL: ${WORDPRESS_URL:-http://localhost:8082}
+    WORDPRESS_SECRET: ${WORDPRESS_SECRET:?Set WORDPRESS_SECRET, see the top of wordpress/docker-compose.yml}
+    WORDPRESS_DB_HOST: mariadb
+    WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-local-only-password}
+    KAAR_API_URL: http://api:8000
+    CONTACT_RETENTION_DAYS: ${CONTACT_RETENTION_DAYS:-180}
+  read_only: true
+  tmpfs:
+    - /tmp
+  volumes:
+    - uploads:/var/www/html/wp-content/uploads
+
+x-api: &api
+  image: ${WORDPRESS_API_IMAGE:-website-wordpress-api:local}
+  build:
+    <<: *build
+    target: api
+  environment:
+    DB_HOST: mariadb
+    DB_DATABASE: api
+    DB_USERNAME: api
+    DB_PASSWORD: ${API_DB_PASSWORD:-local-only-api-password}
+    API_SECRET: ${API_SECRET:?Set API_SECRET, see the top of wordpress/docker-compose.yml}
+    CONTACT_RETENTION_DAYS: ${CONTACT_RETENTION_DAYS:-180}
+    TRUSTED_PROXY_HOPS: ${TRUSTED_PROXY_HOPS:-1} # 2 behind an ingress that appends X-Forwarded-For
+  read_only: true
+  tmpfs:
+    - /tmp
+
+services:
+  mariadb:
+    image: mariadb:11.8
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-local-only-password}
+      MARIADB_RANDOM_ROOT_PASSWORD: "yes"
+      API_DB_PASSWORD: ${API_DB_PASSWORD:-local-only-api-password} # read by mariadb-init.sh
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./docker/mariadb-init.sh:/docker-entrypoint-initdb.d/10-api-database.sh:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # One-shot: create the API schema and sync projects from src/content/projects.
+  api-setup:
+    <<: *api
+    command: ["python", "-m", "app.sync"]
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  api:
+    <<: *api
+    depends_on:
+      api-setup:
+        condition: service_completed_successfully
+
+  # One-shot: install or upgrade WordPress, apply settings and rewrite rules, seed the legal pages.
+  wp-setup:
+    <<: *app
+    command: ["kaar-setup"]
+    environment:
+      <<: *app-env
+      WORDPRESS_ADMIN_EMAIL: ${WORDPRESS_ADMIN_EMAIL:-hello@kaarsmarttechs.com}
+      WORDPRESS_ADMIN_PASSWORD: ${WORDPRESS_ADMIN_PASSWORD:-} # only needed for the first installation
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  app:
+    <<: *app
+    depends_on:
+      wp-setup:
+        condition: service_completed_successfully
+      api:
+        condition: service_started
+
+  # Runs WordPress's scheduled tasks (DISABLE_WP_CRON keeps them off visitor requests).
+  cron:
+    <<: *app
+    command: ["sh", "-c", "while :; do wp cron event run --due-now --quiet; sleep 60; done"]
+    depends_on:
+      wp-setup:
+        condition: service_completed_successfully
+
+  web:
+    image: ${WORDPRESS_WEB_IMAGE:-website-wordpress-web:local}
+    build:
+      <<: *build
+      target: web
+    ports:
+      - "8082:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - uploads:/var/www/html/wp-content/uploads:ro
+    # nginx resolves app and api once at startup: restart it when they get new containers.
+    depends_on:
+      app:
+        condition: service_started
+        restart: true
+      api:
+        condition: service_started
+        restart: true
+
+volumes:
+  mariadb_data:
+  uploads:

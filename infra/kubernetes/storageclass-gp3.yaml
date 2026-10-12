@@ -1,0 +1,17 @@
+# Default StorageClass for EBS gp3 volumes, used by the WordPress release (MariaDB data and
+# uploads). Cluster-scoped, so an operator applies it once, after the aws-ebs-csi-driver addon:
+#
+#   kubectl apply -f infra/kubernetes/storageclass-gp3.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  encrypted: "true"
+volumeBindingMode: WaitForFirstConsumer # create the volume in the zone of the node running the pod
+reclaimPolicy: Retain # deleting the claim keeps the data; remove volumes by hand
+allowVolumeExpansion: true
