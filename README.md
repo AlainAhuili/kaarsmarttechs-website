@@ -83,7 +83,11 @@ context:
 The `wordpress.yml` workflow runs Ruff and pytest against MariaDB and lints the PHP, builds and
 scans the three images, starts them with MariaDB through `wordpress/docker-compose.yml`, runs
 `scripts/smoke-test.sh`, the post-build quality gate against the live pages and a contact form
-round trip, and on `main` pushes exactly the images it tested. It does not deploy them yet.
+round trip, and on `main` pushes exactly the images it tested. It then deploys them by digest
+through `deploy-wordpress.yml` (Kustomize overlays in `k8s/wordpress/`) to
+`wp.staging.kaarsmarttechs.com` and, after approval, to production at **kaarsmarttechs.com**. The
+first deployment to each namespace generates the database and WordPress secrets inside the cluster.
+The Astro site (`delivery.yml`) now deploys to staging only.
 
 ```bash
 export WORDPRESS_SECRET="$(openssl rand -base64 32)" API_SECRET="$(openssl rand -base64 32)"
@@ -106,7 +110,8 @@ See [wordpress/README.md](wordpress/README.md) for the architecture and configur
    gp3 StorageClass).
 5. In GitHub, create environments `staging` and `production`; add required reviewers to
    `production`; add the secret `AWS_DEPLOY_ROLE_ARN` (Terraform output `deployer_role_arn`).
-6. Point DNS for `kaarsmarttechs.com` and `staging.kaarsmarttechs.com` to the ingress load balancer.
+6. Point DNS for `kaarsmarttechs.com`, `staging.kaarsmarttechs.com` and `wp.staging.kaarsmarttechs.com`
+   to the ingress load balancer.
 7. Protect `main`: require the `Lint, test, build` check and a pull request review.
 
 ## Before going live

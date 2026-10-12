@@ -1,0 +1,80 @@
+# MariaDB for the WordPress release: one instance on an EBS volume, with separate databases and
+# users for WordPress and the API. Credentials come from the "wordpress" Secret, which the deploy
+# workflow creates with random values on the first deployment.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: wordpress-mariadb
+  labels: { app.kubernetes.io/name: wordpress-mariadb }
+spec:
+  serviceName: wordpress-mariadb
+  replicas: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: wordpress-mariadb }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: wordpress-mariadb }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999 # mysql
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: mariadb
+          image: mariadb:11.8
+          ports:
+            - { name: mysql, containerPort: 3306 }
+          env:
+            - { name: MARIADB_DATABASE, value: wordpress }
+            - { name: MARIADB_USER, value: wordpress }
+            - name: MARIADB_PASSWORD
+              valueFrom: { secretKeyRef: { name: wordpress, key: WORDPRESS_DB_PASSWORD } }
+            - { name: MARIADB_RANDOM_ROOT_PASSWORD, value: "yes" }
+            - name: API_DB_PASSWORD # read by the init script
+              valueFrom: { secretKeyRef: { name: wordpress, key: API_DB_PASSWORD } }
+          readinessProbe:
+            exec: { command: [healthcheck.sh, --connect, --innodb_initialized] }
+            periodSeconds: 5
+          livenessProbe:
+            exec: { command: [healthcheck.sh, --connect] }
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 512Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/mysql }
+            - { name: run, mountPath: /run/mysqld }
+            - { name: tmp, mountPath: /tmp }
+            - { name: init, mountPath: /docker-entrypoint-initdb.d, readOnly: true }
+      volumes:
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: init
+          configMap: { name: wordpress-mariadb-init }
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: gp3
+        resources:
+          requests: { storage: 5Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-mariadb
+spec:
+  selector: { app.kubernetes.io/name: wordpress-mariadb }
+  ports:
+    - { name: mysql, port: 3306, targetPort: mysql }

@@ -1,0 +1,196 @@
+# The WordPress release in one pod: nginx (web), WordPress on PHP-FPM (app), FastAPI (api) and the
+# WP-cron runner share the pod's network, so nginx reaches "app:9000" and "api:8000" through
+# hostAliases, exactly as in docker-compose.yml. Uploaded media live on an EBS volume that only
+# one node can mount, so there is a single replica and updates recreate the pod (a few seconds
+# of downtime). Scaling out needs a ReadWriteMany volume (EFS) and separate Deployments.
+#
+# Every pod start first runs both setup jobs as init containers: the API schema and project sync,
+# then the WordPress install/upgrade. Both are idempotent.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress
+  labels: { app.kubernetes.io/name: wordpress }
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app.kubernetes.io/name: wordpress }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: wordpress }
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      hostAliases:
+        - ip: 127.0.0.1
+          hostnames: [app, api]
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 82 # www-data owns wp-content/uploads
+        seccompProfile: { type: RuntimeDefault }
+      initContainers:
+        - name: api-setup
+          image: ghcr.io/alainahuili/website-wordpress-api:latest # replaced by the pipeline
+          command: [python, -m, app.sync]
+          envFrom:
+            - configMapRef: { name: wordpress-api }
+          env: &api-secrets
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: wordpress, key: API_DB_PASSWORD } }
+            - name: API_SECRET
+              valueFrom: { secretKeyRef: { name: wordpress, key: API_SECRET } }
+          resources: &small
+            requests: { cpu: 25m, memory: 96Mi }
+            limits: { memory: 192Mi }
+          securityContext: &restricted
+            runAsUser: 65534 # nobody
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: api-tmp, mountPath: /tmp }
+        - name: wp-setup
+          image: ghcr.io/alainahuili/website-wordpress-app:latest # replaced by the pipeline
+          command: [kaar-setup]
+          envFrom:
+            - configMapRef: { name: wordpress-app }
+          env:
+            - &wp-secret
+              name: WORDPRESS_SECRET
+              valueFrom: { secretKeyRef: { name: wordpress, key: WORDPRESS_SECRET } }
+            - &wp-db-password
+              name: WORDPRESS_DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: wordpress, key: WORDPRESS_DB_PASSWORD } }
+            - name: WORDPRESS_ADMIN_PASSWORD # only read on the first installation
+              valueFrom: { secretKeyRef: { name: wordpress, key: WORDPRESS_ADMIN_PASSWORD } }
+          resources: &php
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 384Mi }
+          securityContext: &restricted-www-data
+            runAsUser: 82 # www-data
+            runAsGroup: 82
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: app-tmp, mountPath: /tmp }
+      containers:
+        - name: web
+          image: ghcr.io/alainahuili/website-wordpress-web:latest # replaced by the pipeline
+          ports:
+            - { name: http, containerPort: 8080 }
+          # Ready only when a page renders through nginx, PHP-FPM, the API and MariaDB.
+          readinessProbe:
+            httpGet: { path: /projects/, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 25m, memory: 32Mi }
+            limits: { memory: 64Mi }
+          securityContext:
+            runAsUser: 101 # nginx
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: web-tmp, mountPath: /tmp }
+            - { name: uploads, mountPath: /var/www/html/wp-content/uploads, readOnly: true }
+        - name: app
+          image: ghcr.io/alainahuili/website-wordpress-app:latest # replaced by the pipeline
+          ports:
+            - { name: fastcgi, containerPort: 9000 }
+          envFrom:
+            - configMapRef: { name: wordpress-app }
+          env: [*wp-secret, *wp-db-password]
+          livenessProbe:
+            tcpSocket: { port: fastcgi }
+            periodSeconds: 15
+          resources: *php
+          securityContext: *restricted-www-data
+          volumeMounts:
+            - { name: app-tmp, mountPath: /tmp }
+            - { name: uploads, mountPath: /var/www/html/wp-content/uploads }
+        - name: api
+          image: ghcr.io/alainahuili/website-wordpress-api:latest # replaced by the pipeline
+          ports:
+            - { name: api, containerPort: 8000 }
+          envFrom:
+            - configMapRef: { name: wordpress-api }
+          env: *api-secrets
+          readinessProbe:
+            httpGet: { path: /api/health, port: api }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/health, port: api }
+            periodSeconds: 30
+            timeoutSeconds: 5
+          resources: *small
+          securityContext: *restricted
+          volumeMounts:
+            - { name: api-tmp, mountPath: /tmp }
+        # Runs WordPress's scheduled tasks (DISABLE_WP_CRON keeps them off visitor requests).
+        - name: cron
+          image: ghcr.io/alainahuili/website-wordpress-app:latest # replaced by the pipeline
+          command: [sh, -c, "while :; do wp cron event run --due-now --quiet; sleep 60; done"]
+          envFrom:
+            - configMapRef: { name: wordpress-app }
+          env: [*wp-secret, *wp-db-password]
+          resources:
+            requests: { cpu: 10m, memory: 64Mi }
+            limits: { memory: 256Mi }
+          securityContext: *restricted-www-data
+          volumeMounts:
+            - { name: cron-tmp, mountPath: /tmp }
+            - { name: uploads, mountPath: /var/www/html/wp-content/uploads }
+      volumes:
+        - { name: web-tmp, emptyDir: {} }
+        - { name: app-tmp, emptyDir: {} }
+        - { name: api-tmp, emptyDir: {} }
+        - { name: cron-tmp, emptyDir: {} }
+        - name: uploads
+          persistentVolumeClaim: { claimName: wordpress-uploads }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wordpress-uploads
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: gp3
+  resources:
+    requests: { storage: 5Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress
+spec:
+  selector: { app.kubernetes.io/name: wordpress }
+  ports:
+    - { name: http, port: 80, targetPort: http }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wordpress
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/proxy-body-size: 16m # media uploads in the editor
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [HOST_PLACEHOLDER]
+      secretName: wordpress-tls
+  rules:
+    - host: HOST_PLACEHOLDER
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: wordpress, port: { name: http } }

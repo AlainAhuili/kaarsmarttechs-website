@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: [mariadb.yaml, wordpress.yaml]
+labels:
+  - pairs: { app.kubernetes.io/part-of: website-wordpress }
+configMapGenerator:
+  # Creates the API's database and user on MariaDB's first start (also used by docker-compose.yml).
+  - name: wordpress-mariadb-init
+    files: [10-api-database.sh=mariadb-init.sh]
+  # Non-secret settings; secrets come from the "wordpress" Secret (see the deploy workflow).
+  - name: wordpress-app
+    literals:
+      - WORDPRESS_URL=https://HOST_PLACEHOLDER
+      - WORDPRESS_DB_HOST=wordpress-mariadb
+      - WORDPRESS_ADMIN_EMAIL=hello@kaarsmarttechs.com
+      - KAAR_API_URL=http://api:8000
+      - CONTACT_RETENTION_DAYS=180
+  - name: wordpress-api
+    literals:
+      - DB_HOST=wordpress-mariadb
+      - DB_DATABASE=api
+      - DB_USERNAME=api
+      - CONTACT_RETENTION_DAYS=180
+      - TRUSTED_PROXY_HOPS=2 # ingress-nginx, then nginx in the pod
+images:
+  - name: ghcr.io/alainahuili/website-wordpress-app
+  - name: ghcr.io/alainahuili/website-wordpress-api
+  - name: ghcr.io/alainahuili/website-wordpress-web

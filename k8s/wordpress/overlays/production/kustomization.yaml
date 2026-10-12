@@ -1,0 +1,31 @@
+# WordPress release on production, serving kaarsmarttechs.com. Shares the website-production
+# namespace because the deploy role may only manage the two website namespaces.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: website-production
+resources:
+  - ../../base
+labels:
+  - pairs: { app.kubernetes.io/environment: production }
+images: # set by the pipeline: kustomize edit set image ...@sha256:<digest>
+  - name: ghcr.io/alainahuili/website-wordpress-app
+    newTag: latest
+  - name: ghcr.io/alainahuili/website-wordpress-api
+    newTag: latest
+  - name: ghcr.io/alainahuili/website-wordpress-web
+    newTag: latest
+configMapGenerator:
+  - name: wordpress-app
+    behavior: merge
+    literals:
+      - WORDPRESS_URL=https://kaarsmarttechs.com
+      - WORDPRESS_ENV=production
+patches:
+  - target: { kind: Ingress, name: wordpress }
+    patch: |-
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: kaarsmarttechs.com
+      - op: replace
+        path: /spec/rules/0/host
+        value: kaarsmarttechs.com

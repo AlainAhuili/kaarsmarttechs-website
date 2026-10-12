@@ -1,10 +1,10 @@
 # Release artifact: the site on WordPress (PHP-FPM) + nginx + FastAPI, backed by MariaDB.
 #
 #   commit stage (Ruff, pytest on MariaDB, PHP lint) ─▶ build and scan the three images
-#                                                     ─▶ compose smoke test ─▶ push (main only)
+#     ─▶ compose smoke test ─▶ push (main only) ─▶ staging (auto) ─▶ production (manual approval)
 #
 # The images that pass the scan and the smoke test are the ones pushed: they are re-tagged, not
-# rebuilt. Deployment is not part of this workflow yet.
+# rebuilt, and promoted by digest through both environments. Production serves kaarsmarttechs.com.
 name: wordpress
 
 on:
@@ -244,3 +244,38 @@ jobs:
             echo "$kind=$digest" >> "$GITHUB_OUTPUT"
             echo "Pushed $digest"
           done
+
+  # ------------------------------------------------------------------- staging
+  staging:
+    name: Deploy to staging
+    needs: images
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy-wordpress.yml
+    with:
+      environment: staging
+      url: https://wp.staging.kaarsmarttechs.com
+      app: ${{ needs.images.outputs.app }}
+      api: ${{ needs.images.outputs.api }}
+      web: ${{ needs.images.outputs.web }}
+    secrets: inherit
+    permissions:
+      contents: read
+      id-token: write
+
+  # ---------------------------------------------------------------- production
+  # The "production" GitHub environment has required reviewers, so this job waits for a human
+  # approval after staging passed.
+  production:
+    name: Deploy to production
+    needs: [images, staging]
+    uses: ./.github/workflows/deploy-wordpress.yml
+    with:
+      environment: production
+      url: https://kaarsmarttechs.com
+      app: ${{ needs.images.outputs.app }}
+      api: ${{ needs.images.outputs.api }}
+      web: ${{ needs.images.outputs.web }}
+    secrets: inherit
+    permissions:
+      contents: read
+      id-token: write
