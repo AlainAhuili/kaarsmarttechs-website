@@ -100,7 +100,8 @@ See [wordpress/README.md](wordpress/README.md) for the architecture and configur
    audience `sts.amazonaws.com`); Terraform looks it up instead of owning it, since it is shared.
 3. `cd infra/terraform && terraform init && terraform apply` (creates VPC, EKS and the deploy role;
    EKS with a NAT gateway and two t3.medium nodes costs roughly in the low hundreds of euros per month).
-4. Install ingress-nginx and cert-manager (Helm), then apply the cluster-scoped resources the deploy
+4. Install ingress-nginx with `infra/helm/ingress-nginx.yaml` (see the command in that file) and
+   cert-manager (Helm, `crds.enabled=true`), then apply the cluster-scoped resources the deploy
    role may not create: `kubectl apply -f infra/kubernetes/` (namespaces, `letsencrypt` ClusterIssuer,
    gp3 StorageClass).
 5. In GitHub, create environments `staging` and `production`; add required reviewers to
