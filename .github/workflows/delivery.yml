@@ -1,6 +1,9 @@
-# Continuous delivery pipeline for kaarsmarttechs.com
+# Continuous delivery pipeline for the Astro site
 #
-#   commit stage ─▶ package & scan ─▶ staging (auto) ─▶ production (manual approval)
+#   commit stage ─▶ package & scan ─▶ staging (auto)
+#
+# Production (kaarsmarttechs.com) runs the WordPress release, deployed by wordpress.yml; the Astro
+# site stays on staging.kaarsmarttechs.com.
 #
 # Pull requests run the commit stage only. Every push to main produces one immutable image
 # (tagged with the commit SHA, deployed by digest) that is promoted unchanged through environments.
@@ -105,22 +108,6 @@ jobs:
     with:
       environment: staging
       url: https://staging.kaarsmarttechs.com
-      image: ${{ needs.image.outputs.ref }}
-    secrets: inherit
-    permissions:
-      contents: read
-      id-token: write
-
-  # ---------------------------------------------------------------- production
-  # The "production" GitHub environment has required reviewers, so this job waits
-  # for a human approval: continuous delivery, not continuous deployment.
-  production:
-    name: Deploy to production
-    needs: [image, staging]
-    uses: ./.github/workflows/deploy.yml
-    with:
-      environment: production
-      url: https://kaarsmarttechs.com
       image: ${{ needs.image.outputs.ref }}
     secrets: inherit
     permissions:

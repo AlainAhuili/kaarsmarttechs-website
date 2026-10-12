@@ -36,6 +36,6 @@ jobs:
       - name: Render overlays and validate against the Kubernetes schema
         run: |
           curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz
-          for env in staging production; do
-            kustomize build "k8s/overlays/$env" | ./kubeconform -strict -summary -kubernetes-version 1.31.0
+          for overlay in k8s/overlays/staging k8s/wordpress/overlays/staging k8s/wordpress/overlays/production; do
+            kustomize build "$overlay" | ./kubeconform -strict -summary -kubernetes-version 1.31.0
           done

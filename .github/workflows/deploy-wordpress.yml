@@ -1,0 +1,96 @@
+# Reusable deployment of the WordPress release: create the secrets on the first run, apply the
+# Kustomize overlay with immutable images, wait for the rollout, smoke-test the live URL and roll
+# back automatically if anything fails. Mirrors deploy.yml for the Astro site.
+name: deploy-wordpress
+
+on:
+  workflow_call:
+    inputs:
+      environment: { required: true, type: string }
+      url: { required: true, type: string }
+      app: { required: true, type: string, description: "app image@sha256:digest" }
+      api: { required: true, type: string, description: "api image@sha256:digest" }
+      web: { required: true, type: string, description: "web image@sha256:digest" }
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.url }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      NAMESPACE: website-${{ inputs.environment }}
+      OVERLAY: k8s/wordpress/overlays/${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to AWS (OIDC, no stored keys)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: eu-central-1
+
+      - name: Configure kubectl
+        run: aws eks update-kubeconfig --name kst-platform --region eu-central-1
+
+      - uses: imranismail/setup-kustomize@v3
+        with:
+          kustomize-version: "5.4.3"
+
+      - name: Pin image digests
+        working-directory: ${{ env.OVERLAY }}
+        run: |
+          kustomize edit set image \
+            "ghcr.io/alainahuili/website-wordpress-app=${{ inputs.app }}" \
+            "ghcr.io/alainahuili/website-wordpress-api=${{ inputs.api }}" \
+            "ghcr.io/alainahuili/website-wordpress-web=${{ inputs.web }}"
+
+      # Generated once, inside the cluster: the values never pass through GitHub. Later deployments
+      # keep them, so database passwords and WordPress logins stay valid.
+      - name: Create secrets on the first deployment
+        run: |
+          if kubectl -n "$NAMESPACE" get secret wordpress >/dev/null 2>&1; then
+            echo "Secret wordpress exists, left unchanged."
+            exit 0
+          fi
+          args=""
+          for key in WORDPRESS_SECRET API_SECRET WORDPRESS_DB_PASSWORD API_DB_PASSWORD WORDPRESS_ADMIN_PASSWORD; do
+            value="$(openssl rand -hex 24)"
+            echo "::add-mask::$value"
+            args="$args --from-literal=$key=$value"
+          done
+          kubectl -n "$NAMESPACE" create secret generic wordpress $args
+          echo "Created secret wordpress. Admin password: kubectl -n $NAMESPACE get secret wordpress -o jsonpath='{.data.WORDPRESS_ADMIN_PASSWORD}' | base64 -d"
+
+      - name: Apply manifests
+        id: apply
+        run: kustomize build "$OVERLAY" | kubectl apply -f -
+
+      - name: Wait for rollout
+        run: |
+          kubectl -n "$NAMESPACE" rollout status statefulset/wordpress-mariadb --timeout=300s
+          kubectl -n "$NAMESPACE" rollout status deployment/wordpress --timeout=300s
+
+      - name: Smoke test
+        run: ./scripts/smoke-test.sh "${{ inputs.url }}" "${{ github.sha }}"
+
+      - name: Quality gate against the live pages
+        run: python3 wordpress/tests/site_check.py "${{ inputs.url }}"
+
+      - name: Show pod state
+        if: failure() && steps.apply.outcome != 'skipped'
+        run: |
+          kubectl -n "$NAMESPACE" get pods -l app.kubernetes.io/part-of=website-wordpress -o wide
+          kubectl -n "$NAMESPACE" describe pods -l app.kubernetes.io/name=wordpress | tail -40
+          kubectl -n "$NAMESPACE" logs deployment/wordpress --all-containers --tail=50 || true
+
+      - name: Roll back on failure
+        # only when something reached the cluster; an earlier failure leaves nothing to undo
+        if: failure() && steps.apply.outcome != 'skipped'
+        run: |
+          kubectl -n "$NAMESPACE" rollout undo deployment/wordpress
+          kubectl -n "$NAMESPACE" rollout status deployment/wordpress --timeout=300s
