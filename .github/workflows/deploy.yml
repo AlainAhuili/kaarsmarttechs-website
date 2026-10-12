@@ -20,7 +20,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Authenticate to AWS (OIDC, no stored keys)
         uses: aws-actions/configure-aws-credentials@v6
