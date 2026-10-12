@@ -96,13 +96,17 @@ See [wordpress/README.md](wordpress/README.md) for the architecture and configur
 ## First-time setup
 
 1. Create the Terraform state bucket `kaarsmarttechs-terraform-state` in `eu-central-1`.
-2. `cd infra/terraform && terraform init && terraform apply` (creates VPC, EKS and the deploy role;
+2. Make sure the account has the GitHub OIDC identity provider (`token.actions.githubusercontent.com`,
+   audience `sts.amazonaws.com`); Terraform looks it up instead of owning it, since it is shared.
+3. `cd infra/terraform && terraform init && terraform apply` (creates VPC, EKS and the deploy role;
    EKS with a NAT gateway and two t3.medium nodes costs roughly in the low hundreds of euros per month).
-3. Install cluster add-ons: ingress-nginx and cert-manager with a `letsencrypt` ClusterIssuer.
-4. In GitHub, create environments `staging` and `production`; add required reviewers to
+4. Install ingress-nginx and cert-manager (Helm), then apply the cluster-scoped resources the deploy
+   role may not create: `kubectl apply -f infra/kubernetes/` (namespaces, `letsencrypt` ClusterIssuer,
+   gp3 StorageClass).
+5. In GitHub, create environments `staging` and `production`; add required reviewers to
    `production`; add the secret `AWS_DEPLOY_ROLE_ARN` (Terraform output `deployer_role_arn`).
-5. Point DNS for `kaarsmarttechs.com` and `staging.kaarsmarttechs.com` to the ingress load balancer.
-6. Protect `main`: require the `Lint, test, build` check and a pull request review.
+6. Point DNS for `kaarsmarttechs.com` and `staging.kaarsmarttechs.com` to the ingress load balancer.
+7. Protect `main`: require the `Lint, test, build` check and a pull request review.
 
 ## Before going live
 

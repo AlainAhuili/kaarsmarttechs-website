@@ -1,0 +1,17 @@
+# Let's Encrypt issuer referenced by the website Ingress (cert-manager.io/cluster-issuer). Cluster-scoped,
+# applied once by an operator after installing cert-manager:
+#
+#   kubectl apply -f infra/kubernetes/cluster-issuer.yaml
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-account-key
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: nginx
