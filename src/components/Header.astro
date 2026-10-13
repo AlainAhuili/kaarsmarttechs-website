@@ -10,8 +10,11 @@ const path = Astro.url.pathname;
 <header class="site-header">
   <div class="wrap bar">
     <a class="brand" href="/" aria-label="Kaar Smart Techs, home">
-      <img src="/logo.png" width="38" height="32" alt="" />
-      <span>Kaar Smart Techs</span>
+      <img src="/logo.png" width="66" height="56" alt="" />
+      <span class="name">
+        <span class="name-main">Kaar</span>
+        <span class="name-sub">Smart Techs</span>
+      </span>
     </a>
     <nav aria-label="Main">
       <ul>
@@ -43,13 +46,32 @@ const path = Astro.url.pathname;
   .brand {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.75rem;
     color: var(--ink);
     text-decoration: none;
     font-family: var(--display);
     font-variation-settings: "wdth" 125;
+    text-transform: uppercase;
+  }
+  .brand img {
+    height: clamp(2.75rem, 8vw, 3.5rem);
+    width: auto;
+  }
+  .name {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+  .name-main {
     font-weight: 800;
-    font-size: 1.15rem;
+    font-size: 1.6rem;
+    letter-spacing: 0.04em;
+  }
+  .name-sub {
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    margin-top: 0.3rem;
   }
   ul {
     display: flex;

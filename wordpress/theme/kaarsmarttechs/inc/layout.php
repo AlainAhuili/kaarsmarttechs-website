@@ -79,8 +79,11 @@ function kaar_site_header(): void
     <header class="site-header">
       <div class="wrap bar">
         <a class="brand" href="/" aria-label="Kaar Smart Techs, home">
-          <img src="/logo.png" width="38" height="32" alt="">
-          <span>Kaar Smart Techs</span>
+          <img src="/logo.png" width="66" height="56" alt="">
+          <span class="name">
+            <span class="name-main">Kaar</span>
+            <span class="name-sub">Smart Techs</span>
+          </span>
         </a>
         <nav aria-label="Main">
           <ul>
