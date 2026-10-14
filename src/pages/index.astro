@@ -1,30 +1,81 @@
 ---
-import { getCollection } from "astro:content";
+import { getEntry } from "astro:content";
 import Base from "../layouts/Base.astro";
+import type { ComponentProps } from "astro/types";
+import Icon from "../components/Icon.astro";
 import SorterLine from "../components/SorterLine.astro";
-import ProjectRow from "../components/ProjectRow.astro";
-import { sortProjects } from "../lib/projects";
 
-const projects = sortProjects(await getCollection("projects"));
-const flagship = projects.find((p) => p.data.flagship)!;
-const others = projects.filter((p) => !p.data.flagship).slice(0, 3);
+type IconName = ComponentProps<typeof Icon>["name"];
 
-const disciplines = [
+const email = "hello@kaarsmarttechs.com";
+
+const stats = [
+  { value: "AI & CV", label: "Computer vision systems" },
+  { value: "Embedded", label: "Mechatronics and controllers" },
+  { value: "Eco-Tech", label: "Solar-powered systems" },
+  { value: "Germany", label: "Delmenhorst hub" },
+];
+
+// The four projects featured on the home page, with a short list of highlights each.
+const featured = await Promise.all(
+  (
+    [
+      {
+        id: "lego-sorting-system",
+        icon: "cube",
+        tag: "Automation & AI",
+        highlights: [
+          "Real-time image recognition and bounding boxes",
+          "Mechanical conveyor and sorting feeder",
+          "Custom microcontroller and motor integration",
+        ],
+      },
+      {
+        id: "travel-hygienic-wc-seat-frame",
+        icon: "hygiene",
+        tag: "Smart Health & Utility",
+        highlights: [
+          "Compact folding architecture for transit",
+          "Touch-free UV-C disinfection module",
+          "Lightweight metal frame",
+        ],
+      },
+      {
+        id: "solar-led-wireframe-sculptures",
+        icon: "solar",
+        tag: "Sustainable Art & Tech",
+        highlights: [
+          "Miniature photovoltaic cells",
+          "Weatherproof welded wireframe structures",
+          "Dusk-to-dawn lighting control",
+        ],
+      },
+      {
+        id: "embedded-vision-toolkit",
+        icon: "network",
+        tag: "Embedded Vision",
+        highlights: [
+          "Camera capture and lighting normalisation",
+          "Segmentation and on-device inference",
+          "Reusable C++ modules with a stable interface",
+        ],
+      },
+    ] satisfies { id: string; icon: IconName; tag: string; highlights: string[] }[]
+  ).map(async (f) => ({ ...f, project: (await getEntry("projects", f.id))! })),
+);
+
+const values = [
   {
-    name: "Computer vision",
-    text: "Cameras and OpenCV pipelines that identify, measure and count objects in real time.",
+    name: "Visionary innovation",
+    text: "Anticipating tomorrow's technological demands through proactive research and prototyping.",
   },
   {
-    name: "Embedded systems",
-    text: "Low-level C++ that drives sensors and actuators reliably on small hardware.",
+    name: "Seamless connectivity",
+    text: "Integrating IoT, sensors and computer vision so physical devices stay intelligently synchronised.",
   },
   {
-    name: "Cloud and DevOps",
-    text: "Terraform, Docker, Kubernetes and AWS, delivered through automated pipelines.",
-  },
-  {
-    name: "Agentic tooling",
-    text: "Model Context Protocol integrations that let AI assistants work with your systems.",
+    name: "Sustainable impact",
+    text: "Championing solar power and energy-efficient mechatronics across our products.",
   },
 ];
 ---
@@ -33,147 +84,672 @@ const disciplines = [
   title="Kaar Smart Techs"
   description="Kaar Smart Techs builds computer vision, embedded and cloud systems that work in the physical world. Based in Delmenhorst, Germany."
 >
-  <section class="hero">
-    <div class="wrap">
-      <h1>We build machines that see and sort.</h1>
-      <p class="lead">
-        Computer vision, embedded software and cloud infrastructure, engineered as one system. From
-        Delmenhorst, Germany.
+  <section class="hero" id="hero">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="wrap hero-inner">
+      <div class="emblem">
+        <img src="/logo.png" width="113" height="96" alt="" />
+      </div>
+      <p class="badge">
+        <Icon name="chip" size={16} />
+        Engineering the next generation of smart systems
       </p>
-    </div>
-    <div class="wrap line">
-      <SorterLine />
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="wrap">
-      <h2>What we work on</h2>
-      <ul class="disciplines">
-        {disciplines.map((d) => (
+      <h1>
+        Kaar <span class="gradient">Smart Techs</span>
+      </h1>
+      <p class="motto">"Innovating Tomorrow, Connected Today"</p>
+      <p class="intro">
+        Based in <strong>Delmenhorst, Germany</strong>, we build mechatronic systems, computer
+        vision automation, solar-powered installations and smart hygiene products.
+      </p>
+      <div class="actions">
+        <a class="button" href="#innovations">
+          Explore innovations <Icon name="arrow" size={18} />
+        </a>
+        <a class="button secondary" href="/contact/">
+          Partner with us
+        </a>
+      </div>
+      <div class="line">
+        <SorterLine />
+      </div>
+      <ul class="stats">
+        {stats.map((s) => (
           <li>
-            <h3>{d.name}</h3>
-            <p>{d.text}</p>
+            <strong>{s.value}</strong>
+            <span>{s.label}</span>
           </li>
         ))}
       </ul>
     </div>
   </section>
 
-  <section class="section flagship">
-    <div class="wrap split">
-      <div>
-        <h2>{flagship.data.title}</h2>
-        <p class="lead">{flagship.data.tagline}</p>
-        <p>{flagship.data.problem}</p>
-        <a class="button" href={`/projects/${flagship.id}/`}>
-          Read the case study
-        </a>
-      </div>
-      <dl class="facts">
-        <div>
-          <dt>Status</dt>
-          <dd>{flagship.data.status}</dd>
-        </div>
-        <div>
-          <dt>Built with</dt>
-          <dd>{flagship.data.stack.join(", ")}</dd>
-        </div>
-      </dl>
-    </div>
-  </section>
-
-  <section class="section">
+  <section class="section band" id="innovations">
     <div class="wrap">
-      <h2>More projects</h2>
-      <ul class="rows">
-        {others.map((p) => (
-          <ProjectRow project={p} />
+      <div class="heading">
+        <p class="eyebrow">Our core portfolio</p>
+        <h2>Pioneering engineering projects</h2>
+        <p>
+          What we are building across automation, robotics, smart sanitation and sustainable
+          installations, with an honest status on each one.
+        </p>
+      </div>
+      <ul class="cards">
+        {featured.map(({ project, icon, tag, highlights }) => (
+          <li class="card">
+            <div class="card-body">
+              <div class="card-top">
+                <span class="icon">
+                  <Icon name={icon} size={28} />
+                </span>
+                <span class="tag">{tag}</span>
+              </div>
+              <h3>
+                <a href={`/projects/${project.id}/`}>{project.data.title}</a>
+              </h3>
+              <p>{project.data.tagline}</p>
+              <ul class="highlights">
+                {highlights.map((h) => (
+                  <li>
+                    <Icon name="check" size={16} />
+                    {h}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div class="card-foot">
+              <span>Status: {project.data.status}</span>
+              <span class="more" aria-hidden="true">
+                Case study <Icon name="chevron" size={14} />
+              </span>
+            </div>
+          </li>
         ))}
       </ul>
-      <p>
+      <p class="all">
         <a href="/projects/">See all projects</a>
       </p>
     </div>
   </section>
 
-  <section class="section cta">
+  <section class="section" id="about">
+    <div class="wrap about">
+      <div>
+        <p class="eyebrow">About Kaar Smart Techs</p>
+        <h2>Rooted in Delmenhorst, engineering for the globe</h2>
+        <p>
+          Kaar Smart Techs was founded to bridge the gap between electrical engineering and modern
+          software intelligence. Working from <strong>Delmenhorst, Lower Saxony, Germany</strong>,
+          we combine German engineering discipline with creative, future-proof design.
+        </p>
+        <p>
+          Whether we are building automated sorting machines, sanitary travel products or
+          solar-driven wireframe sculptures, our commitment stays the same:{" "}
+          <em class="accent">"Innovating Tomorrow, Connected Today"</em>.
+        </p>
+        <div class="pillars">
+          <div>
+            <Icon name="bolt" />
+            <div>
+              <h3>Electrical and software</h3>
+              <p>Physical circuits and smart code, designed together.</p>
+            </div>
+          </div>
+          <div>
+            <Icon name="shield" />
+            <div>
+              <h3>Robust reliability</h3>
+              <p>Built to run unattended, and tested before it ships.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="values-wrap">
+        <div class="values">
+          <h3>
+            <Icon name="target" /> Core values and mission
+          </h3>
+          <dl>
+            {values.map((v) => (
+              <div>
+                <dt>{v.name}</dt>
+                <dd>{v.text}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section band" id="contact">
     <div class="wrap">
-      <h2>Have a machine that needs to see?</h2>
-      <p class="lead">Tell us what you want to detect, sort or automate.</p>
-      <a class="button" href="/contact/">
-        Start a conversation
-      </a>
+      <div class="heading">
+        <p class="eyebrow">Get in touch</p>
+        <h2>Let's build the future together</h2>
+        <p>
+          Have a project inquiry or a collaboration proposal, or want to explore our technologies?
+          Reach out to our Delmenhorst team.
+        </p>
+      </div>
+      <div class="contact">
+        <ul class="contact-cards">
+          <li>
+            <span class="icon">
+              <Icon name="pin" size={20} />
+            </span>
+            <div>
+              <h3>Headquarters</h3>
+              <p>
+                Delmenhorst, Lower Saxony
+                <br />
+                Germany
+              </p>
+            </div>
+          </li>
+          <li>
+            <span class="icon">
+              <Icon name="mail" size={20} />
+            </span>
+            <div>
+              <h3>Email us</h3>
+              <p>
+                <a href={`mailto:${email}`}>{email}</a>
+              </p>
+            </div>
+          </li>
+          <li>
+            <span class="icon">
+              <Icon name="globe" size={20} />
+            </span>
+            <div>
+              <h3>Response time</h3>
+              <p>We reply within two working days.</p>
+            </div>
+          </li>
+        </ul>
+        <div class="contact-panel">
+          <h3>Tell us about your project</h3>
+          <p>
+            Describe what you want to detect, sort or automate, and roughly when you need it. We'll
+            get back to you with next steps.
+          </p>
+          <a class="button" href={`mailto:${email}`}>
+            Send us a message <Icon name="send" size={18} />
+          </a>
+        </div>
+      </div>
     </div>
   </section>
 </Base>
 
 <style>
+  /* ---------------------------------------------------------------- hero */
   .hero {
-    padding-top: clamp(3rem, 8vw, 6rem);
+    position: relative;
+    overflow: hidden;
+    padding-block: clamp(4rem, 10vw, 8rem) clamp(4rem, 9vw, 7rem);
+    text-align: center;
+    background-image:
+      radial-gradient(circle at 50% 50%, rgb(6 182 212 / 0.05) 0%, transparent 80%),
+      linear-gradient(to right, rgb(255 255 255 / 0.02) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.02) 1px, transparent 1px);
+    background-size:
+      100% 100%,
+      40px 40px,
+      40px 40px;
   }
-  .hero h1 {
-    max-width: 14ch;
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(64px);
+    pointer-events: none;
   }
-  .line {
-    margin-top: clamp(1.5rem, 4vw, 3rem);
+  .orb-a {
+    top: 25%;
+    left: 50%;
+    width: 24rem;
+    height: 24rem;
+    transform: translate(-50%, -50%);
+    background: rgb(6 182 212 / 0.1);
   }
-  .disciplines {
-    list-style: none;
-    margin: 2rem 0 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-    border-left: 1px solid var(--rule);
+  .orb-b {
+    bottom: 2.5rem;
+    right: 2.5rem;
+    width: 20rem;
+    height: 20rem;
+    background: rgb(37 99 235 / 0.1);
   }
-  .disciplines li {
-    padding: 0.25rem 1.5rem 0.5rem;
-    border-right: 1px solid var(--rule);
+  .hero-inner {
+    position: relative;
   }
-  .flagship {
-    background: var(--panel);
+  .emblem {
+    display: inline-block;
+    margin-bottom: 2rem;
+    padding: 0.75rem;
+    border-radius: var(--radius);
+    background: rgb(10 17 40 / 0.8);
+    border: 1px solid rgb(6 182 212 / 0.4);
+    box-shadow: var(--glow);
   }
-  .split {
-    display: grid;
-    grid-template-columns: 3fr 2fr;
-    gap: 3rem;
-    align-items: start;
+  .emblem img {
+    display: block;
+    width: clamp(5.5rem, 14vw, 7rem);
   }
-  .facts {
-    margin: 0;
-    border-top: 4px solid var(--signal);
-  }
-  .facts div {
-    padding-block: 0.9rem;
-    border-bottom: 1px solid var(--rule);
-  }
-  dt {
-    color: var(--steel);
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: none;
+    margin: 0 auto 1.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    background: rgb(6 182 212 / 0.1);
+    border: 1px solid rgb(6 182 212 / 0.3);
+    color: var(--accent);
     font-size: var(--step--1);
+    font-weight: 600;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
-  dd {
-    margin: 0.2rem 0 0;
+  @keyframes pulse {
+    50% {
+      opacity: 0.6;
+    }
+  }
+  h1 {
+    font-size: clamp(2.5rem, 8vw, 4.75rem);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .gradient {
+    background: linear-gradient(to right, var(--accent), var(--accent-blue));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .motto {
+    max-width: none;
+    margin-bottom: 2rem;
+    font-size: clamp(1.25rem, 3vw, 1.5rem);
+    font-weight: 300;
+    font-style: italic;
+    letter-spacing: 0.02em;
+    color: #67e8f9;
+  }
+  .intro {
+    max-width: 48rem;
+    margin: 0 auto 2.5rem;
+    font-size: clamp(1rem, 2vw, 1.125rem);
+    color: var(--muted);
+  }
+  .intro strong {
+    color: var(--heading);
     font-weight: 500;
   }
-  .rows {
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+  .line {
+    max-width: 64rem;
+    margin: clamp(2.5rem, 6vw, 4rem) auto 0;
+  }
+  .stats {
     list-style: none;
-    margin: 1.5rem 0;
+    margin: clamp(2.5rem, 6vw, 4rem) auto 0;
     padding: 0;
+    max-width: 64rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
   }
-  .cta {
-    background: var(--ink);
-    color: var(--paper);
+  .stats li {
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    background: rgb(10 17 40 / 0.6);
+    border: 1px solid var(--rule);
+    backdrop-filter: blur(4px);
   }
-  .cta .lead {
-    color: #c9d2dc;
+  .stats strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: clamp(1.6rem, 3.5vw, 2.25rem);
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--accent);
   }
-  .cta .button {
-    background: var(--signal);
-    color: var(--ink);
-    border-bottom-color: var(--paper);
+  .stats span {
+    font-size: var(--step--1);
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  /* ------------------------------------------------------- shared section */
+  .band {
+    background: rgb(10 17 40 / 0.5);
+  }
+  .heading {
+    max-width: 48rem;
+    margin: 0 auto 4rem;
+    text-align: center;
+  }
+  .heading p:last-child {
+    margin-inline: auto;
+    font-size: 1.125rem;
+    color: var(--muted);
+  }
+  .eyebrow {
+    margin-bottom: 0.75rem;
+    font-size: var(--step--1);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  h2 {
+    font-size: clamp(1.9rem, 4.5vw, 3rem);
+  }
+  .icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: var(--radius);
+    background: rgb(6 182 212 / 0.1);
+    border: 1px solid rgb(6 182 212 / 0.3);
+    color: var(--accent);
+  }
+
+  /* ---------------------------------------------------------- portfolio */
+  .cards {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3);
+    transition: border-color 0.3s;
+  }
+  .card:hover,
+  .card:focus-within {
+    border-color: rgb(6 182 212 / 0.5);
+  }
+  .card-body {
+    padding: 2rem;
+  }
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .card .icon {
+    transition: transform 0.3s;
+  }
+  .card:hover .icon {
+    transform: scale(1.1);
+  }
+  .tag {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: rgb(6 182 212 / 0.1);
+    border: 1px solid rgb(6 182 212 / 0.2);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: right;
+  }
+  .card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .card h3 a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  /* The whole card is clickable through the title link. */
+  .card h3 a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+  .card:hover h3 a {
+    color: var(--accent);
+  }
+  .card-body > p {
+    font-size: var(--step--1);
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+  }
+  .highlights {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+    font-size: var(--step--1);
+  }
+  .highlights li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .highlights :global(svg) {
+    flex-shrink: 0;
+    color: var(--accent);
+  }
+  .card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 2rem;
+    background: var(--surface);
+    border-top: 1px solid var(--rule);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--accent);
+  }
+  .all {
+    margin: 2.5rem 0 0;
+    max-width: none;
+    text-align: center;
+  }
+
+  /* -------------------------------------------------------------- about */
+  .about {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+  .about > div > p:not(.eyebrow) {
+    color: var(--muted);
+  }
+  .about strong {
+    color: var(--heading);
+    font-weight: 600;
+  }
+  .accent {
+    color: #67e8f9;
+  }
+  .pillars {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  .pillars > div {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .pillars :global(svg) {
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+    color: var(--accent);
+  }
+  .pillars h3,
+  .contact-cards h3 {
+    font-size: var(--step--1);
+    letter-spacing: 0;
+    margin-bottom: 0.25rem;
+  }
+  .pillars p,
+  .contact-cards p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .values-wrap {
+    position: relative;
+  }
+  .values-wrap::before {
+    content: "";
+    position: absolute;
+    inset: -0.25rem;
+    border-radius: 1.5rem;
+    background: linear-gradient(to right, #06b6d4, #2563eb);
+    opacity: 0.3;
+    filter: blur(16px);
+  }
+  .values {
+    position: relative;
+    padding: clamp(2rem, 4vw, 2.5rem);
+    border-radius: 1.5rem;
+    background: var(--surface);
+    border: 1px solid rgb(100 116 139 / 0.35);
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+  }
+  .values h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.25rem;
+    letter-spacing: 0;
+    margin-bottom: 1.5rem;
+  }
+  .values h3 :global(svg) {
+    color: var(--accent);
+  }
+  .values dl {
+    margin: 0;
+  }
+  .values dl div {
+    padding-block: 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .values dl div:first-child {
+    padding-top: 0;
+  }
+  .values dl div:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+  dt {
+    margin-bottom: 0.25rem;
+    font-size: var(--step--1);
+    font-weight: 600;
+    color: var(--heading);
+  }
+  dd {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  /* ------------------------------------------------------------ contact */
+  .contact {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+  }
+  .contact-cards {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1.5rem;
+  }
+  .contact-cards li {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    background: var(--bg);
+    border: 1px solid var(--rule);
+  }
+  .contact-cards .icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+  }
+  .contact-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: clamp(2rem, 5vw, 2.5rem);
+    border-radius: 1.5rem;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3);
+  }
+  .contact-panel h3 {
+    font-size: var(--step-2);
+  }
+  .contact-panel p {
+    color: var(--muted);
+    margin-bottom: 2rem;
+  }
+
+  /* ------------------------------------------------------------- layout */
+  @media (max-width: 56rem) {
+    .about,
+    .contact {
+      grid-template-columns: 1fr;
+    }
   }
   @media (max-width: 48rem) {
-    .split {
+    .stats {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    .cards {
+      grid-template-columns: 1fr;
+    }
+    .actions .button {
+      width: 100%;
+    }
+  }
+  @media (max-width: 30rem) {
+    .pillars {
       grid-template-columns: 1fr;
     }
   }

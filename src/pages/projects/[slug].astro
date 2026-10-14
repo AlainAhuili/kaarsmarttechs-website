@@ -78,7 +78,7 @@ const { title, tagline, status, categories, problem, stack, metrics } = project.
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
     margin: 2rem 0;
-    border-top: 4px solid var(--signal);
+    border-top: 4px solid var(--accent);
     border-bottom: 1px solid var(--rule);
   }
   .facts div,
@@ -86,7 +86,7 @@ const { title, tagline, status, categories, problem, stack, metrics } = project.
     padding: 0.9rem 1.25rem 0.9rem 0;
   }
   dt {
-    color: var(--steel);
+    color: var(--muted);
     font-size: var(--step--1);
   }
   dd {
@@ -107,17 +107,16 @@ const { title, tagline, status, categories, problem, stack, metrics } = project.
     border: 1px solid var(--rule);
   }
   .metrics dl div {
-    background: var(--panel);
+    background: var(--surface);
     padding: 1.25rem;
   }
   .metrics dd {
     font-family: var(--display);
-    font-variation-settings: "wdth" 125;
     font-weight: 800;
     font-size: var(--step-2);
   }
   .metrics .pending dd {
-    color: var(--steel);
+    color: var(--muted);
     font-size: var(--step-1);
     font-weight: 600;
   }
