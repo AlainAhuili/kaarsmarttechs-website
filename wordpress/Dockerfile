@@ -15,7 +15,7 @@ FROM wordpress:7.1-php8.5-fpm-alpine AS wordpress-core
 FROM wordpress:cli-2.12-php8.5 AS wp-cli
 
 # ---- Self-hosted fonts, pinned in the root package-lock.json (Astro now uses Inter) ----
-FROM node:24-alpine AS fonts
+FROM node:25-alpine AS fonts
 WORKDIR /build
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund \
