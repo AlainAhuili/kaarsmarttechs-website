@@ -10,11 +10,35 @@ type IconName = ComponentProps<typeof Icon>["name"];
 const email = "hello@kaarsmarttechs.com";
 
 const stats = [
-  { value: "AI & CV", label: "Computer vision systems" },
-  { value: "Embedded", label: "Mechatronics and controllers" },
-  { value: "Eco-Tech", label: "Solar-powered systems" },
+  { value: "Edge AI", label: "Processing where machines run" },
+  { value: "100%", label: "On-device autonomy" },
+  { value: "NPU · Jetson", label: "Embedded targets" },
   { value: "Germany", label: "Delmenhorst hub" },
 ];
+
+// The four technical pillars, shown as cards under the hero.
+const capabilities = [
+  {
+    icon: "eye",
+    name: "Vision and inspection systems",
+    text: "Low-latency OpenCV pipelines, camera setups and custom classification models for real-time work such as high-speed part sorting and 3D precision welding robotics.",
+  },
+  {
+    icon: "chip",
+    name: "Embedded and systems engineering",
+    text: "Lightweight, energy-efficient C++ and C# software running directly on constrained targets (NPU, Jetson and specialised microcontrollers) for predictable real-time performance.",
+  },
+  {
+    icon: "network",
+    name: "Agentic AI and MCP integrations",
+    text: "Secure Model Context Protocol servers connecting AI assistants, RAG diagnostic tools and local equipment, without compromising your IP or network autonomy.",
+  },
+  {
+    icon: "cloud",
+    name: "Hybrid cloud and delivery pipelines",
+    text: "Enterprise-grade cloud architecture with Terraform, Kubernetes and AWS, and continuous integration with strict code-quality gates.",
+  },
+] satisfies { icon: IconName; name: string; text: string }[];
 
 // The four projects featured on the home page, with a short list of highlights each.
 const featured = await Promise.all(
@@ -64,25 +88,26 @@ const featured = await Promise.all(
   ).map(async (f) => ({ ...f, project: (await getEntry("projects", f.id))! })),
 );
 
+// What processing at the edge gives the client, from the mission statement.
 const values = [
   {
-    name: "Visionary innovation",
-    text: "Anticipating tomorrow's technological demands through proactive research and prototyping.",
+    name: "No cloud latency",
+    text: "Data is processed right where machines and sensors operate, so decisions happen in real time.",
   },
   {
-    name: "Seamless connectivity",
-    text: "Integrating IoT, sensors and computer vision so physical devices stay intelligently synchronised.",
+    name: "Lower infrastructure costs",
+    text: "Less data shipped to and stored in the cloud means smaller bills and simpler infrastructure.",
   },
   {
-    name: "Sustainable impact",
-    text: "Championing solar power and energy-efficient mechatronics across our products.",
+    name: "Reliability without compromise",
+    text: "Maximum operational reliability, with sensitive production data kept on site.",
   },
 ];
 ---
 
 <Base
   title="Kaar Smart Techs"
-  description="Kaar Smart Techs builds computer vision, embedded and cloud systems that work in the physical world. Based in Delmenhorst, Germany."
+  description="Kaar Smart Techs bridges software and hardware with Edge AI, embedded systems and robust cloud infrastructure. Based in Delmenhorst, Germany."
 >
   <section class="hero" id="hero">
     <div class="orb orb-a"></div>
@@ -93,19 +118,20 @@ const values = [
       </div>
       <p class="badge">
         <Icon name="chip" size={16} />
-        Engineering the next generation of smart systems
+        Edge AI, embedded systems and cloud infrastructure
       </p>
       <h1>
         Kaar <span class="gradient">Smart Techs</span>
       </h1>
       <p class="motto">"Innovating Tomorrow, Connected Today"</p>
       <p class="intro">
-        Based in <strong>Delmenhorst, Germany</strong>, we build mechatronic systems, computer
-        vision automation, solar-powered installations and smart hygiene products.
+        We bridge high-performance software with hardware. By processing data at the edge, right
+        where machines and sensors operate, our solutions eliminate cloud latency, cut
+        infrastructure costs and deliver maximum reliability without sacrificing data security.
       </p>
       <div class="actions">
-        <a class="button" href="#innovations">
-          Explore innovations <Icon name="arrow" size={18} />
+        <a class="button" href="#capabilities">
+          Explore capabilities <Icon name="arrow" size={18} />
         </a>
         <a class="button secondary" href="/contact/">
           Partner with us
@@ -125,14 +151,43 @@ const values = [
     </div>
   </section>
 
+  <section class="section" id="capabilities">
+    <div class="wrap">
+      <div class="heading">
+        <p class="eyebrow">Key technical pillars</p>
+        <h2>From the sensor to the cloud</h2>
+        <p>
+          Four disciplines, delivered by one team, so vision, embedded code, AI tooling and
+          infrastructure fit together from day one.
+        </p>
+      </div>
+      <ul class="cards capabilities">
+        {capabilities.map((c) => (
+          <li class="card">
+            <div class="card-body">
+              <span class="icon">
+                <Icon name={c.icon} size={28} />
+              </span>
+              <h3>{c.name}</h3>
+              <p>{c.text}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p class="all">
+        <a href="/services/">How we work with you</a>
+      </p>
+    </div>
+  </section>
+
   <section class="section band" id="innovations">
     <div class="wrap">
       <div class="heading">
         <p class="eyebrow">Our core portfolio</p>
-        <h2>Pioneering engineering projects</h2>
+        <h2>Where software meets hardware</h2>
         <p>
-          What we are building across automation, robotics, smart sanitation and sustainable
-          installations, with an honest status on each one.
+          What we are building, from vision-guided sorting and embedded inspection to smart utility
+          products and solar installations, with an honest status on each one.
         </p>
       </div>
       <ul class="cards">
@@ -179,28 +234,36 @@ const values = [
         <p class="eyebrow">About Kaar Smart Techs</p>
         <h2>Rooted in Delmenhorst, engineering for the globe</h2>
         <p>
-          Kaar Smart Techs was founded to bridge the gap between electrical engineering and modern
-          software intelligence. Working from <strong>Delmenhorst, Lower Saxony, Germany</strong>,
-          we combine German engineering discipline with creative, future-proof design.
+          Kaar Smart Techs bridges high-performance software with hardware through localised
+          processing (Edge AI), embedded systems and robust cloud infrastructure. Working from{" "}
+          <strong>Delmenhorst, Lower Saxony, Germany</strong>, we combine German engineering
+          discipline with creative, future-proof design.
         </p>
         <p>
-          Whether we are building automated sorting machines, sanitary travel products or
-          solar-driven wireframe sculptures, our commitment stays the same:{" "}
+          Whether we are building automated sorting machines, vision-guided robotics or secure AI
+          integrations, our commitment stays the same:{" "}
           <em class="accent">"Innovating Tomorrow, Connected Today"</em>.
         </p>
+        <h3 class="advantage">Strategic advantage</h3>
         <div class="pillars">
-          <div>
-            <Icon name="bolt" />
-            <div>
-              <h3>Electrical and software</h3>
-              <p>Physical circuits and smart code, designed together.</p>
-            </div>
-          </div>
           <div>
             <Icon name="shield" />
             <div>
-              <h3>Robust reliability</h3>
-              <p>Built to run unattended, and tested before it ships.</p>
+              <h3>100% on-device autonomy</h3>
+              <p>
+                No dependency on a constant internet connection, so critical machinery keeps running
+                through network disruptions.
+              </p>
+            </div>
+          </div>
+          <div>
+            <Icon name="bolt" />
+            <div>
+              <h3>Turnkey engineering</h3>
+              <p>
+                Full-lifecycle delivery, from quantised model deployment and hardware optimisation
+                to audit-ready codebases.
+              </p>
             </div>
           </div>
         </div>
@@ -208,7 +271,7 @@ const values = [
       <div class="values-wrap">
         <div class="values">
           <h3>
-            <Icon name="target" /> Core values and mission
+            <Icon name="target" /> Core mission and value
           </h3>
           <dl>
             {values.map((v) => (
@@ -581,6 +644,17 @@ const values = [
     text-align: center;
   }
 
+  /* ------------------------------------------------------- capabilities */
+  .capabilities .card {
+    background: var(--surface);
+  }
+  .capabilities .icon {
+    margin-bottom: 1.5rem;
+  }
+  .capabilities .card-body > p {
+    margin-bottom: 0;
+  }
+
   /* -------------------------------------------------------------- about */
   .about {
     display: grid;
@@ -598,11 +672,18 @@ const values = [
   .accent {
     color: #67e8f9;
   }
+  .advantage {
+    margin: 2rem 0 0;
+    font-size: var(--step--1);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
   .pillars {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
-    margin-top: 2rem;
+    margin-top: 1rem;
   }
   .pillars > div {
     display: flex;

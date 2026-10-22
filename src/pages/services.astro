@@ -4,42 +4,64 @@ import Base from "../layouts/Base.astro";
 const services = [
   {
     name: "Vision and inspection systems",
-    text: "Camera setup, lighting, OpenCV pipelines and classification models for detecting, counting and sorting objects.",
+    text: "Low-latency OpenCV pipelines, camera setup and lighting, and custom classification models for real-time applications such as high-speed part sorting and 3D precision welding robotics.",
   },
   {
-    name: "Embedded software",
-    text: "C++ and C# software for controllers, sensors and actuators, built for reliability on constrained hardware.",
+    name: "Embedded and systems engineering",
+    text: "Lightweight, energy-efficient C++ and C# software running directly on constrained targets (NPU, Jetson and specialised microcontrollers) for predictable real-time performance.",
   },
   {
-    name: "Cloud platform and delivery pipelines",
-    text: "Infrastructure as code with Terraform, containerised services on Kubernetes and AWS, and CI/CD with approval gates.",
+    name: "Agentic AI and MCP integrations",
+    text: "Secure Model Context Protocol servers connecting AI assistants, RAG diagnostic tools and local equipment, with human confirmation where it matters and without compromising your IP or network autonomy.",
+  },
+  {
+    name: "Hybrid cloud and delivery pipelines",
+    text: "Enterprise-grade cloud architecture as code with Terraform, containerised services on Kubernetes and AWS, and continuous integration with approval gates.",
   },
   {
     name: "Code quality audits",
-    text: "Static analysis and test gates for C++, Python and TypeScript repositories, set up and tuned for your codebase.",
+    text: "Static analysis and strict test gates for C++, Python and TypeScript repositories, set up and tuned for your codebase so it stays audit-ready.",
+  },
+];
+
+const advantages = [
+  {
+    name: "100% on-device autonomy",
+    text: "No dependency on a constant internet connection, so critical industrial machinery keeps running reliably through network disruptions.",
   },
   {
-    name: "Agentic tooling and MCP integrations",
-    text: "Model Context Protocol servers that connect AI assistants to your data and machines, with human confirmation where it matters.",
+    name: "Turnkey engineering",
+    text: "Full-lifecycle delivery, from quantised model deployment and hardware optimisation to audit-ready codebases.",
   },
 ];
 ---
 
 <Base
   title="Services"
-  description="Engineering services from Kaar Smart Techs: vision systems, embedded software, cloud platforms, code quality audits and MCP integrations."
+  description="Engineering services from Kaar Smart Techs: Edge AI vision systems, embedded software, MCP integrations, hybrid cloud pipelines and code quality audits."
 >
   <section class="section">
     <div class="wrap">
       <h1>Services</h1>
       <p class="lead">
-        We take on projects where software meets hardware, or where delivery needs to be automated.
+        We bridge high-performance software with hardware. By processing data at the edge, right
+        where machines and sensors operate, we remove cloud latency, cut infrastructure costs and
+        keep your data on site.
       </p>
       <dl class="services">
         {services.map((s) => (
           <div>
             <dt>{s.name}</dt>
             <dd>{s.text}</dd>
+          </div>
+        ))}
+      </dl>
+      <h2>Strategic advantage</h2>
+      <dl class="services">
+        {advantages.map((a) => (
+          <div>
+            <dt>{a.name}</dt>
+            <dd>{a.text}</dd>
           </div>
         ))}
       </dl>
@@ -61,6 +83,10 @@ const services = [
     gap: 0.5rem 2.5rem;
     padding-block: 1.5rem;
     border-bottom: 1px solid var(--rule);
+  }
+  h2 {
+    margin-top: 4rem;
+    font-size: var(--step-2);
   }
   dt {
     font-family: var(--display);

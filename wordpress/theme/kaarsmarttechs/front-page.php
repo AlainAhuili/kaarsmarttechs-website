@@ -5,23 +5,28 @@ $projects = kaar_projects()['projects'];
 $flagship = current(array_filter($projects, fn ($p) => $p['flagship'])) ?: ($projects[0] ?? null);
 $others = array_slice(array_values(array_filter($projects, fn ($p) => ! $p['flagship'])), 0, 3);
 $disciplines = [
-    'Computer vision' => 'Cameras and OpenCV pipelines that identify, measure and count objects in real time.',
-    'Embedded systems' => 'Low-level C++ that drives sensors and actuators reliably on small hardware.',
-    'Cloud and DevOps' => 'Terraform, Docker, Kubernetes and AWS, delivered through automated pipelines.',
-    'Agentic tooling' => 'Model Context Protocol integrations that let AI assistants work with your systems.',
+    'Vision and inspection systems' => 'Low-latency OpenCV pipelines, camera setups and custom classification models for real-time work such as high-speed part sorting and 3D precision welding robotics.',
+    'Embedded and systems engineering' => 'Lightweight, energy-efficient C++ and C# software running directly on constrained targets (NPU, Jetson and specialised microcontrollers) for predictable real-time performance.',
+    'Agentic AI and MCP integrations' => 'Secure Model Context Protocol servers connecting AI assistants, RAG diagnostic tools and local equipment, without compromising your IP or network autonomy.',
+    'Hybrid cloud and delivery pipelines' => 'Enterprise-grade cloud architecture with Terraform, Kubernetes and AWS, and continuous integration with strict code-quality gates.',
+];
+$advantages = [
+    '100% on-device autonomy' => 'No dependency on a constant internet connection, so critical industrial machinery keeps running reliably through network disruptions.',
+    'Turnkey engineering' => 'Full-lifecycle delivery, from quantised model deployment and hardware optimisation to audit-ready codebases.',
 ];
 
 kaar_layout_open(
     KAAR_SITE_NAME,
-    'Kaar Smart Techs builds computer vision, embedded and cloud systems that work in the physical world. Based in Delmenhorst, Germany.',
+    'Kaar Smart Techs bridges software and hardware with Edge AI, embedded systems and robust cloud infrastructure. Based in Delmenhorst, Germany.',
 );
 ?>
       <section class="hero">
         <div class="wrap">
-          <h1>We build machines that see and sort.</h1>
+          <h1>We bring AI to the edge, where machines run.</h1>
           <p class="lead">
-            Computer vision, embedded software and cloud infrastructure, engineered as one system. From
-            Delmenhorst, Germany.
+            High-performance software bridged with hardware through Edge AI, embedded systems and robust
+            cloud infrastructure. Processing data where machines and sensors operate removes cloud
+            latency, cuts infrastructure costs and keeps your data secure. From Delmenhorst, Germany.
           </p>
         </div>
         <div class="wrap line">
@@ -31,7 +36,7 @@ kaar_layout_open(
 
       <section class="section">
         <div class="wrap">
-          <h2>What we work on</h2>
+          <h2>Key technical pillars</h2>
           <ul class="disciplines">
 <?php foreach ($disciplines as $name => $text) { ?>
             <li>
@@ -40,6 +45,20 @@ kaar_layout_open(
             </li>
 <?php } ?>
           </ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>Strategic advantage</h2>
+          <dl class="services">
+<?php foreach ($advantages as $name => $text) { ?>
+            <div>
+              <dt><?= esc_html($name) ?></dt>
+              <dd><?= esc_html($text) ?></dd>
+            </div>
+<?php } ?>
+          </dl>
         </div>
       </section>
 
