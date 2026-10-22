@@ -5,6 +5,9 @@ delivery pipeline: every commit to `main` is built once, tested, packaged into a
 container image, scanned, deployed to staging automatically and promoted to production after a
 manual approval.
 
+> **Live site today:** kaarsmarttechs.com is served by IONOS Apache webspace, not by the EKS
+> pipeline below. See [Production on IONOS](#production-on-ionos) for how it is deployed.
+
 ## Architecture
 
 ```mermaid
@@ -64,6 +67,32 @@ docker compose up --build  # production container on http://localhost:8080
 Add a portfolio project by creating `src/content/projects/<slug>.md`; the schema rejects missing
 or invalid fields at build time. Leave a metric's `value` empty until it is measured: the page
 shows "Measuring" instead of an estimate.
+
+## Production on IONOS
+
+kaarsmarttechs.com is the static Astro build (`dist/`) on IONOS Apache webspace, uploaded over
+SFTP. The SFTP host and user are in the IONOS control panel (the user is SFTP-only, no shell).
+The GitHub Actions deploy to EKS has failed at AWS role assumption since 2026-10-12 and does not
+reach this host.
+
+- The domain serves from the **`/kaarsmarttechs`** folder, not the SFTP root. The root holds an
+  older unused copy; do not deploy there.
+- `/kaarsmarttechs` also holds files that are only on the server: `.htaccess` (HTTPS and www
+  redirects, CSP and other security headers, dotfile block, caching), `healthz` and
+  `version.txt`. Upload over them; never empty the folder.
+
+To release:
+
+```bash
+git checkout main && git pull
+npm ci && npm run build && npm run test:dist
+# 1. Download /kaarsmarttechs as a backup.
+# 2. Upload the contents of dist/ into /kaarsmarttechs, overwriting.
+# 3. Write the UTC time (YYYYMMDDHHMM) to /kaarsmarttechs/version.txt.
+curl -s https://kaarsmarttechs.com/version.txt   # shows the new time
+```
+
+Pages are cached for 5 minutes, so the change can take that long to show in a browser.
 
 ## Release artifact: WordPress + nginx + FastAPI + MariaDB
 
