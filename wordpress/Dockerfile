@@ -79,7 +79,7 @@ HEALTHCHECK --interval=30s --timeout=3s CMD python -c "import urllib.request; ur
 CMD ["uvicorn", "--factory", "app.main:create_app", "--host", "0.0.0.0", "--port", "8000", "--no-proxy-headers", "--no-server-header"]
 
 # ---- web: nginx serving static files, passing PHP to the app and /api/ to the API -----
-FROM nginxinc/nginx-unprivileged:1.31.6-alpine AS web
+FROM nginxinc/nginx-unprivileged:1.31.7-alpine AS web
 USER root
 RUN apk upgrade --no-cache
 COPY wordpress/docker/nginx.conf /etc/nginx/conf.d/default.conf
