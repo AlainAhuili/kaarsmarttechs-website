@@ -1,0 +1,43 @@
+---
+import Base from "../layouts/Base.astro";
+import { fill, useDict, type Lang } from "../i18n";
+// TODO before launch: replace every bracketed value (in src/i18n/*.ts) with the registered
+// company details and have the text reviewed. An Impressum is mandatory for German business
+// websites (§ 5 DDG).
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useDict(lang).impressum;
+---
+
+<Base lang={lang} title={t.title} description={t.description}>
+  <section class="section">
+    <div class="wrap prose">
+      <h1>{t.title}</h1>
+      <h2>{t.info}</h2>
+      <p>
+        Kaar Smart Techs
+        {t.address.map((line) => (
+          <>
+            <br />
+            {line}
+          </>
+        ))}
+      </p>
+      <h2>{t.represented}</h2>
+      <p>{t.representedValue}</p>
+      <h2>{t.contact}</h2>
+      <p>
+        {fill(t.email, { email: "hello@kaarsmarttechs.com" })}
+        <br />
+        {fill(t.phone, { phone: t.phoneValue })}
+      </p>
+      <h2>{t.register}</h2>
+      <p>{t.registerValue}</p>
+      <h2>{t.vat}</h2>
+      <p>{t.vatValue}</p>
+    </div>
+  </section>
+</Base>

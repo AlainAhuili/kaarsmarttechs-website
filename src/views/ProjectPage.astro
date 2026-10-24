@@ -1,0 +1,162 @@
+---
+import { render, type CollectionEntry } from "astro:content";
+import Base from "../layouts/Base.astro";
+import { localePath, useDict, type Lang } from "../i18n";
+
+interface Props {
+  lang: Lang;
+  project: CollectionEntry<"projects">;
+}
+const { lang, project } = Astro.props;
+const dict = useDict(lang);
+const t = dict.project;
+const { Content } = await render(project);
+const { title, tagline, status, categories, problem, stack, metrics, videos } = project.data;
+---
+
+<Base lang={lang} title={title} description={tagline}>
+  <article class="section">
+    <div class="wrap">
+      <p class="crumb">
+        <a href={localePath(lang, "/projects/")}>{dict.projects.title}</a>
+      </p>
+      <h1>{title}</h1>
+      <p class="lead">{tagline}</p>
+
+      <dl class="facts">
+        <div>
+          <dt>{t.status}</dt>
+          <dd>{dict.status[status]}</dd>
+        </div>
+        <div>
+          <dt>{t.categories}</dt>
+          <dd>{categories.map((c) => dict.categories[c]).join(", ")}</dd>
+        </div>
+        <div>
+          <dt>{t.builtWith}</dt>
+          <dd>{stack.join(", ")}</dd>
+        </div>
+      </dl>
+
+      {videos.length > 0 && (
+        <div class="demos">
+          {videos.map((v) => (
+            <figure>
+              <video controls playsinline preload="none" poster={v.poster}>
+                <source src={v.src} type="video/mp4" />
+              </video>
+              <figcaption>{v.caption}</figcaption>
+            </figure>
+          ))}
+        </div>
+      )}
+
+      <div class="prose">
+        <h2>{t.problem}</h2>
+        <p>{problem}</p>
+        <Content />
+      </div>
+
+      {metrics.length > 0 && (
+        <section class="metrics" aria-labelledby="results">
+          <h2 id="results">{t.results}</h2>
+          <p>{t.resultsNote}</p>
+          <dl>
+            {metrics.map((m) => (
+              <div class={m.value ? "" : "pending"}>
+                <dt>{m.label}</dt>
+                <dd>{m.value ?? t.measuring}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+
+      <p class="next">
+        <a class="button" href={localePath(lang, "/contact/")}>
+          {t.next}
+        </a>
+      </p>
+    </div>
+  </article>
+</Base>
+<style>
+  .crumb {
+    font-size: var(--step--1);
+  }
+  h1 {
+    font-size: var(--step-3);
+    max-width: 20ch;
+  }
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    margin: 2rem 0;
+    border-top: 4px solid var(--accent);
+    border-bottom: 1px solid var(--rule);
+  }
+  .facts div,
+  .metrics dl div {
+    padding: 0.9rem 1.25rem 0.9rem 0;
+  }
+  .demos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: 1.5rem;
+    margin: 0 0 2.5rem;
+  }
+  .demos figure {
+    margin: 0;
+  }
+  .demos video {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: #000;
+  }
+  .demos figcaption {
+    margin-top: 0.6rem;
+    color: var(--muted);
+    font-size: var(--step--1);
+  }
+  dt {
+    color: var(--muted);
+    font-size: var(--step--1);
+  }
+  dd {
+    margin: 0.2rem 0 0;
+    font-weight: 500;
+  }
+  .metrics {
+    margin-top: 3rem;
+  }
+  .metrics h2 {
+    font-size: var(--step-2);
+  }
+  .metrics dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+  .metrics dl div {
+    background: var(--surface);
+    padding: 1.25rem;
+  }
+  .metrics dd {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: var(--step-2);
+  }
+  .metrics .pending dd {
+    color: var(--muted);
+    font-size: var(--step-1);
+    font-weight: 600;
+  }
+  .next {
+    margin-top: 3rem;
+  }
+</style>

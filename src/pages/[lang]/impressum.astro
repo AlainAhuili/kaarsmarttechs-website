@@ -1,0 +1,12 @@
+---
+import ImpressumPage from "../../views/ImpressumPage.astro";
+import { PREFIXED_LANGS, type Lang } from "../../i18n";
+
+export function getStaticPaths() {
+  return PREFIXED_LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Lang;
+---
+
+<ImpressumPage lang={lang} />

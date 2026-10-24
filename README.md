@@ -64,8 +64,14 @@ docker compose up --build  # production container on http://localhost:8080
 ./scripts/smoke-test.sh http://localhost:8080 local
 ```
 
-Add a portfolio project by creating `src/content/projects/<slug>.md`; the schema rejects missing
-or invalid fields at build time. Leave a metric's `value` empty until it is measured: the page
+The site is in English (`/`), German (`/de/`) and French (`/fr/`). Page texts live in
+`src/i18n/en.ts`, `de.ts` and `fr.ts`; `astro check` fails if a key is missing in one language.
+Pages are built from `src/views/`, with thin routes in `src/pages/` (English) and
+`src/pages/[lang]/` (German and French). The post-build gate fails if a page or project exists in
+one language but not the others.
+
+Add a portfolio project by creating `src/content/projects/{en,de,fr}/<slug>.md` (same slug, status,
+categories and order in all three); the schema rejects missing or invalid fields at build time. Leave a metric's `value` empty until it is measured: the page
 shows "Measuring" instead of an estimate.
 
 To show a demo recording on a project page, convert it with

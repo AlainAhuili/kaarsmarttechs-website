@@ -1,8 +1,9 @@
 ---
 import Base from "../layouts/Base.astro";
+// One 404 page for every language (Apache's ErrorDocument), so it links to each home page.
 ---
 
-<Base title="Page not found" description="The page you were looking for does not exist.">
+<Base lang="en" title="Page not found" description="The page you were looking for does not exist.">
   <section class="section">
     <div class="wrap">
       <h1>This page fell off the belt.</h1>
@@ -12,6 +13,12 @@ import Base from "../layouts/Base.astro";
           Go to the homepage
         </a>{" "}
         &nbsp; <a href="/projects/">Browse projects</a>
+      </p>
+      <p lang="de">
+        Diese Seite gibt es nicht. <a href="/de/">Zur deutschen Startseite</a>
+      </p>
+      <p lang="fr">
+        Cette page n’existe pas. <a href="/fr/">Aller à l’accueil en français</a>
       </p>
     </div>
   </section>

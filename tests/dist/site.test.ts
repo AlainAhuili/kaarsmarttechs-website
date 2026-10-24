@@ -27,24 +27,47 @@ function resolves(href: string): boolean {
   return existsSync(target) || existsSync(join(target, "index.html"));
 }
 
+// English at the root, German and French under a prefix.
+const PREFIXES = { en: "", de: "/de", fr: "/fr" } as const;
+const langOf = (route: string) => (route.match(/^\/(de|fr)\//)?.[1] ?? "en") as keyof typeof PREFIXES;
+const unprefixed = (route: string) => route.replace(/^\/(de|fr)(?=\/)/, "");
+
 describe("built site", () => {
-  it("contains the required pages", () => {
+  it("contains the required pages in every language", () => {
     const routes = pages.map((p) => p.route);
-    for (const r of ["/", "/projects/", "/projects/lego-sorting-system/", "/impressum/", "/datenschutz/", "/contact/", "/404.html"]) {
-      expect(routes).toContain(r);
+    expect(routes).toContain("/404.html");
+    for (const prefix of Object.values(PREFIXES)) {
+      for (const r of ["/", "/projects/", "/projects/lego-sorting-system/", "/impressum/", "/datenschutz/", "/contact/", "/services/"]) {
+        expect(routes).toContain(prefix + r);
+      }
     }
   });
 
-  describe.each(pages.map((p) => [p.route, p] as const))("%s", (_route, page) => {
+  it("has every page in all three languages", () => {
+    const byLang = (lang: keyof typeof PREFIXES) =>
+      pages.filter((p) => p.route !== "/404.html" && langOf(p.route) === lang).map((p) => unprefixed(p.route)).sort();
+    expect(byLang("de")).toEqual(byLang("en"));
+    expect(byLang("fr")).toEqual(byLang("en"));
+  });
+
+  describe.each(pages.map((p) => [p.route, p] as const))("%s", (route, page) => {
+    const lang = langOf(route);
+
     it("has lang, title and meta description", () => {
-      expect(page.html).toMatch(/<html lang="en"/);
+      expect(page.html).toContain(`<html lang="${lang}"`);
       expect(page.html).toMatch(/<title>[^<]{5,}<\/title>/);
       expect(page.html).toMatch(/<meta name="description" content="[^"]{30,}"/);
     });
 
     it("links to the Impressum and privacy policy (German law)", () => {
-      expect(page.html).toContain('href="/impressum/"');
-      expect(page.html).toContain('href="/datenschutz/"');
+      expect(page.html).toContain(`href="${PREFIXES[lang]}/impressum/"`);
+      expect(page.html).toContain(`href="${PREFIXES[lang]}/datenschutz/"`);
+    });
+
+    it.skipIf(route === "/404.html")("names its versions in every language, and they exist", () => {
+      const alternates = [...page.html.matchAll(/<link rel="alternate" hreflang="([\w-]+)" href="https?:\/\/[^/"]+(\/[^"]*)"/g)];
+      expect(alternates.map((m) => m[1]).sort()).toEqual(["de", "en", "fr", "x-default"]);
+      expect(alternates.map((m) => m[2]!).filter((h) => !resolves(h))).toEqual([]);
     });
 
     it("has exactly one h1", () => {

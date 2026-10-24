@@ -1,0 +1,20 @@
+---
+import { getCollection } from "astro:content";
+import ProjectPage from "../../../views/ProjectPage.astro";
+import { PREFIXED_LANGS, projectSlug, type Lang } from "../../../i18n";
+
+export async function getStaticPaths() {
+  const projects = await getCollection("projects", (p) => !p.id.startsWith("en/"));
+  return projects
+    .filter((p) => (PREFIXED_LANGS as readonly string[]).includes(p.id.split("/")[0]!))
+    .map((project) => ({
+      params: { lang: project.id.split("/")[0]!, slug: projectSlug(project.id) },
+      props: { project },
+    }));
+}
+
+const lang = Astro.params.lang as Lang;
+const { project } = Astro.props;
+---
+
+<ProjectPage lang={lang} project={project} />

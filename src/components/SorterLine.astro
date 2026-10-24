@@ -1,10 +1,16 @@
 ---
 // Animated conveyor: bricks pass the camera and are pushed into the bin for their colour.
 // With reduced motion, the bricks rest on the belt at their static positions.
+import { useDict, type Lang } from "../i18n";
+
+interface Props {
+  lang: Lang;
+}
+const t = useDict(Astro.props.lang).sorter;
 const bins = [
-  { x: 330, label: "Vision", color: "var(--accent)" },
-  { x: 560, label: "Embedded", color: "#f2b705" },
-  { x: 790, label: "Cloud", color: "var(--accent-blue)" },
+  { x: 330, label: t.bins[0], color: "var(--accent)" },
+  { x: 560, label: t.bins[1], color: "#f2b705" },
+  { x: 790, label: t.bins[2], color: "var(--accent-blue)" },
 ];
 // static x on the belt, target bin index, animation delay (s)
 const bricks = [
@@ -19,10 +25,7 @@ const bricks = [
 
 <figure class="sorter">
   <svg viewBox="0 0 1000 370" role="img" aria-labelledby="sorter-title">
-    <title id="sorter-title">
-      A conveyor carries coloured bricks past a camera, and each brick is pushed into the bin that
-      matches its colour.
-    </title>
+    <title id="sorter-title">{t.title}</title>
 
     <!-- camera and scan beam -->
     <polygon points="165,62 195,62 225,150 135,150" fill="var(--accent)" opacity="0.2"></polygon>

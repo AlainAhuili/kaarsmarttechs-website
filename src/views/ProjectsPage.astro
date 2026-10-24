@@ -1,0 +1,102 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import ProjectRow from "../components/ProjectRow.astro";
+import { CATEGORIES, categorySlug, sortProjects } from "../lib/projects";
+import { fill, useDict, type Lang } from "../i18n";
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const dict = useDict(lang);
+const t = dict.projects;
+const projects = sortProjects(await getCollection("projects", (p) => p.id.startsWith(`${lang}/`)));
+const count = (n: number) => fill(n === 1 ? t.countOne : t.countMany, { n });
+---
+
+<Base lang={lang} title={t.title} description={t.description}>
+  <section class="section">
+    <div class="wrap">
+      <h1>{t.title}</h1>
+      <p class="lead">{t.lead}</p>
+
+      <div class="filters" role="group" aria-label={t.filterLabel}>
+        <button type="button" data-filter="all" aria-pressed="true">
+          {t.all}
+        </button>
+        {CATEGORIES.map((c) => (
+          <button type="button" data-filter={categorySlug(c)} aria-pressed="false">
+            {dict.categories[c]}
+          </button>
+        ))}
+      </div>
+      <p class="count" aria-live="polite" id="count" data-one={t.countOne} data-many={t.countMany}>
+        {count(projects.length)}
+      </p>
+
+      <ul class="rows" id="project-list">
+        {projects.map((p) => (
+          <ProjectRow lang={lang} project={p} />
+        ))}
+      </ul>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>("[data-filter]");
+  const rows = document.querySelectorAll<HTMLLIElement>("#project-list > li");
+  const count = document.getElementById("count")!;
+
+  buttons.forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const filter = btn.dataset.filter!;
+      let shown = 0;
+      buttons.forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+      rows.forEach((row) => {
+        const match = filter === "all" || row.dataset.categories!.split(" ").includes(filter);
+        row.hidden = !match;
+        if (match) shown++;
+      });
+      const template = shown === 1 ? count.dataset.one! : count.dataset.many!;
+      count.textContent = template.replace("{n}", String(shown));
+    }),
+  );
+</script>
+
+<style>
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 2rem;
+  }
+  .filters button {
+    font: inherit;
+    font-size: var(--step--1);
+    font-weight: 500;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .filters button[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .count {
+    color: var(--muted);
+    font-size: var(--step--1);
+    margin-top: 1rem;
+  }
+  .rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+</style>

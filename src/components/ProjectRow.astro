@@ -1,25 +1,28 @@
 ---
 import type { CollectionEntry } from "astro:content";
 import { categorySlug } from "../lib/projects";
+import { fill, localePath, projectSlug, useDict, type Lang } from "../i18n";
 
 interface Props {
+  lang: Lang;
   project: CollectionEntry<"projects">;
 }
-const { project } = Astro.props;
+const { lang, project } = Astro.props;
+const dict = useDict(lang);
 const { title, tagline, status, categories, stack } = project.data;
 ---
 
 <li class="row" data-categories={categories.map(categorySlug).join(" ")}>
   <div class="meta">
-    <span class="status">{status}</span>
-    <span class="cats">{categories.join(", ")}</span>
+    <span class="status">{dict.status[status]}</span>
+    <span class="cats">{categories.map((c) => dict.categories[c]).join(", ")}</span>
   </div>
   <div class="body">
     <h3>
-      <a href={`/projects/${project.id}/`}>{title}</a>
+      <a href={localePath(lang, `/projects/${projectSlug(project.id)}/`)}>{title}</a>
     </h3>
     <p>{tagline}</p>
-    <p class="stack">Built with {stack.slice(0, 5).join(", ")}</p>
+    <p class="stack">{fill(dict.project.builtWithList, { list: stack.slice(0, 5).join(", ") })}</p>
   </div>
 </li>
 

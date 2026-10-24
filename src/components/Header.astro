@@ -1,17 +1,26 @@
 ---
 import Icon from "./Icon.astro";
+import { LANGS, localePath, useDict, type Lang } from "../i18n";
 
+interface Props {
+  lang: Lang;
+  /** Current page without the language prefix, e.g. "/projects/". */
+  path: string;
+}
+const { lang, path } = Astro.props;
+const t = useDict(lang);
 const links = [
-  { href: "/projects/", label: "Projects" },
-  { href: "/services/", label: "Services" },
-  { href: "/#about", label: "About us" },
+  { href: localePath(lang, "/projects/"), label: t.nav.projects },
+  { href: localePath(lang, "/services/"), label: t.nav.services },
+  { href: localePath(lang, "/#about"), label: t.nav.about },
 ];
-const path = Astro.url.pathname;
+const contact = localePath(lang, "/contact/");
+const current = Astro.url.pathname;
 ---
 
 <header class="site-header" id="site-header">
   <div class="wrap bar">
-    <a class="brand" href="/" aria-label="Kaar Smart Techs, home">
+    <a class="brand" href={localePath(lang, "/")} aria-label={t.nav.home}>
       <span class="mark">
         <img src="/logo.png" width="113" height="96" alt="" />
       </span>
@@ -29,14 +38,14 @@ const path = Astro.url.pathname;
       hidden
     >
       <Icon name="menu" size={28} />
-      <span class="visually-hidden">Menu</span>
+      <span class="visually-hidden">{t.nav.menu}</span>
     </button>
     <div class="menu" id="site-menu">
-      <nav aria-label="Main">
+      <nav aria-label={t.nav.main}>
         <ul>
           {links.map((l) => (
             <li>
-              <a href={l.href} aria-current={path.startsWith(l.href) ? "page" : undefined}>
+              <a href={l.href} aria-current={current.startsWith(l.href) ? "page" : undefined}>
                 {l.label}
               </a>
             </li>
@@ -45,11 +54,29 @@ const path = Astro.url.pathname;
       </nav>
       <a
         class="button cta"
-        href="/contact/"
-        aria-current={path === "/contact/" ? "page" : undefined}
+        href={contact}
+        aria-current={current.startsWith(contact) ? "page" : undefined}
       >
-        Get in touch
+        {t.nav.cta}
       </a>
+      <ul class="langs" aria-label={t.nav.language}>
+        {LANGS.map((l) => {
+          const meta = useDict(l).meta;
+          return (
+            <li>
+              <a
+                href={localePath(l, path)}
+                hreflang={l}
+                lang={l}
+                aria-current={l === lang ? "true" : undefined}
+              >
+                <span aria-hidden="true">{meta.short}</span>
+                <span class="visually-hidden">{meta.name}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   </div>
 </header>
@@ -156,6 +183,29 @@ const path = Astro.url.pathname;
     font-size: var(--step--1);
     padding: 0.6rem 1.2rem;
   }
+  .langs {
+    gap: 0.15rem;
+    padding: 0.2rem;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+  }
+  .langs a {
+    display: block;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+  }
+  .langs a:hover {
+    color: var(--heading);
+  }
+  .langs a[aria-current="true"] {
+    background: rgb(6 182 212 / 0.15);
+    color: var(--accent);
+  }
   .menu-toggle {
     display: none;
     background: none;
@@ -181,9 +231,12 @@ const path = Astro.url.pathname;
     .site-header[data-menu="closed"] .menu {
       display: none;
     }
-    ul {
+    nav ul {
       flex-direction: column;
       gap: 0;
+    }
+    .langs {
+      align-self: flex-start;
     }
     nav a {
       display: block;

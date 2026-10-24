@@ -1,26 +1,5 @@
 ---
-import Base from "../layouts/Base.astro";
-const email = "hello@kaarsmarttechs.com";
+import ContactPage from "../views/ContactPage.astro";
 ---
 
-<Base title="Contact" description="Contact Kaar Smart Techs in Delmenhorst, Germany.">
-  <section class="section">
-    <div class="wrap">
-      <h1>Contact</h1>
-      <p class="lead">
-        Describe what you want to detect, sort or automate, and roughly when you need it. We reply
-        within two working days.
-      </p>
-      <p>
-        <a class="button" href={`mailto:${email}`}>
-          Email {email}
-        </a>
-      </p>
-      <p>
-        Kaar Smart Techs
-        <br />
-        Delmenhorst, Lower Saxony, Germany
-      </p>
-    </div>
-  </section>
-</Base>
+<ContactPage lang="en" />

@@ -1,0 +1,29 @@
+---
+import Base from "../layouts/Base.astro";
+import { useDict, type Lang } from "../i18n";
+// TODO before launch: complete (in src/i18n/*.ts) and have reviewed. This site sets no cookies,
+// loads no third-party resources (fonts are self-hosted) and has no analytics.
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useDict(lang).privacy;
+---
+
+<Base lang={lang} title={t.title} description={t.description}>
+  <section class="section">
+    <div class="wrap prose">
+      <h1>{t.title}</h1>
+      <p>{t.intro}</p>
+      <h2>{t.controller}</h2>
+      <p>{t.controllerText}</p>
+      <h2>{t.logs}</h2>
+      <p>{t.logsText}</p>
+      <h2>{t.email}</h2>
+      <p>{t.emailText}</p>
+      <h2>{t.rights}</h2>
+      <p>{t.rightsText}</p>
+    </div>
+  </section>
+</Base>

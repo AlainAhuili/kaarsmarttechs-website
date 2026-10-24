@@ -1,0 +1,30 @@
+---
+import Base from "../layouts/Base.astro";
+import { fill, useDict, type Lang } from "../i18n";
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useDict(lang).contact;
+const email = "hello@kaarsmarttechs.com";
+---
+
+<Base lang={lang} title={t.title} description={t.description}>
+  <section class="section">
+    <div class="wrap">
+      <h1>{t.title}</h1>
+      <p class="lead">{t.lead}</p>
+      <p>
+        <a class="button" href={`mailto:${email}`}>
+          {fill(t.email, { email })}
+        </a>
+      </p>
+      <p>
+        Kaar Smart Techs
+        <br />
+        {t.place}
+      </p>
+    </div>
+  </section>
+</Base>

@@ -2,40 +2,61 @@
 import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
+import { LANGS, DEFAULT_LANG, localePath, splitPath, useDict, type Lang } from "../i18n";
 
 interface Props {
+  lang: Lang;
   title: string;
   description: string;
 }
-const { title, description } = Astro.props;
+const { lang, title, description } = Astro.props;
+const t = useDict(lang);
 const fullTitle = title === "Kaar Smart Techs" ? title : `${title} | Kaar Smart Techs`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+// The same page in every language, for search engines and the language switch. The 404 page
+// has no translations: its switch leads to each home page and it names no alternates.
+const notFound = Astro.url.pathname.startsWith("/404");
+const path = notFound ? "/" : splitPath(Astro.url.pathname).path;
+const alternates = notFound
+  ? []
+  : LANGS.map((l) => ({ lang: l, href: new URL(localePath(l, path), Astro.site) }));
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    {alternates.map((a) => (
+      <link rel="alternate" hreflang={a.lang} href={a.href} />
+    ))}
+    {!notFound && (
+      <link
+        rel="alternate"
+        hreflang="x-default"
+        href={new URL(localePath(DEFAULT_LANG, path), Astro.site)}
+      />
+    )}
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={t.meta.ogLocale} />
     <meta name="theme-color" content="#15202e" />
   </head>
   <body>
     <a class="skip-link" href="#main">
-      Skip to content
+      {t.nav.skip}
     </a>
-    <Header />
+    <Header lang={lang} path={path} />
     <main id="main">
       <slot />
     </main>
-    <Footer />
+    <Footer lang={lang} />
   </body>
 </html>

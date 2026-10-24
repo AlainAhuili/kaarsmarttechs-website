@@ -1,4 +1,11 @@
 ---
+import { localePath, useDict, type Lang } from "../i18n";
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useDict(lang).footer;
 const year = new Date().getFullYear();
 ---
 
@@ -7,22 +14,24 @@ const year = new Date().getFullYear();
     <div>
       <p class="name">Kaar Smart Techs</p>
       <p>
-        Vision, embedded and cloud systems.
+        {t.blurb}
         <br />
-        Delmenhorst, Germany
+        {t.place}
       </p>
     </div>
-    <p class="tagline">"Innovating Tomorrow, Connected Today"</p>
-    <nav aria-label="Legal">
-      <a href="/impressum/">Impressum</a>
-      <a href="/datenschutz/">Privacy policy</a>
-      <a href="/contact/">Contact</a>
+    <!-- The motto stays in English in every language. -->
+    <p class="tagline" lang="en">
+      "Innovating Tomorrow, Connected Today"
+    </p>
+    <nav aria-label={t.legal}>
+      <a href={localePath(lang, "/impressum/")}>{t.impressum}</a>
+      <a href={localePath(lang, "/datenschutz/")}>{t.privacy}</a>
+      <a href={localePath(lang, "/contact/")}>{t.contact}</a>
     </nav>
   </div>
   <div class="wrap fine">
     <p>
-      &copy; {year} Kaar Smart Techs. LEGO&reg; is a trademark of the LEGO Group, which does not
-      sponsor, authorise or endorse this website.
+      &copy; {year} Kaar Smart Techs. {t.lego}
     </p>
   </div>
 </footer>
