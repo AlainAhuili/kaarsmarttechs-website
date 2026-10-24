@@ -16,6 +16,17 @@ const projects = defineCollection({
     stack: z.array(z.string()).min(1),
     // Only measured numbers are published; empty "value" renders as "Measuring".
     metrics: z.array(z.object({ label: z.string(), value: z.string().optional() })).default([]),
+    // Demo recordings, self-hosted in public/videos/ (no third-party player).
+    videos: z
+      .array(
+        z.object({
+          src: z.string().regex(/^\/videos\/[\w-]+\.mp4$/),
+          poster: z.string().regex(/^\/videos\/[\w-]+\.(jpg|webp)$/),
+          caption: z.string().max(200),
+        }),
+      )
+      .max(4)
+      .default([]),
   }),
 });
 

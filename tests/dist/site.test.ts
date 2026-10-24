@@ -57,13 +57,18 @@ describe("built site", () => {
       expect(broken).toEqual([]);
     });
 
+    it("has no missing video or poster files", () => {
+      const files = [...page.html.matchAll(/(?:<source[^>]+src|poster)="(\/[^"]*)"/g)].map((m) => m[1]!);
+      expect(files.filter((f) => !resolves(f))).toEqual([]);
+    });
+
     it("has no inline scripts (they would be blocked by the CSP)", () => {
       const inline = [...page.html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>/g)];
       expect(inline).toEqual([]);
     });
 
     it("loads no third-party resources (GDPR: fonts and scripts are self-hosted)", () => {
-      const external = [...page.html.matchAll(/<(?:script|link|img|iframe)[^>]+(?:src|href)="(https?:\/\/[^"]+)"/g)]
+      const external = [...page.html.matchAll(/<(?:script|link|img|iframe|video|source)[^>]+(?:src|href|poster)="(https?:\/\/[^"]+)"/g)]
         .map((m) => m[1]!)
         .filter((url) => !url.startsWith("https://kaarsmarttechs.com"));
       expect(external).toEqual([]);

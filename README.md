@@ -68,6 +68,21 @@ Add a portfolio project by creating `src/content/projects/<slug>.md`; the schema
 or invalid fields at build time. Leave a metric's `value` empty until it is measured: the page
 shows "Measuring" instead of an estimate.
 
+To show a demo recording on a project page, convert it with
+`.\scripts\prepare-video.ps1 -In <recording> -Name <name>` (needs ffmpeg; writes
+`public/videos/<name>.mp4` and a poster `.jpg`; add `-KeepAudio` for narration) and list it
+in the project's front matter (up to four):
+
+```yaml
+videos:
+  - src: /videos/<name>.mp4
+    poster: /videos/<name>.jpg
+    caption: What the viewer sees, in one sentence.
+```
+
+Videos are served from our own webspace, so no third-party player or cookie is involved. Keep
+them short (under a minute, under ~25 MB) and free of identifiable people.
+
 ## Production on IONOS
 
 kaarsmarttechs.com is the static Astro build (`dist/`) on IONOS Apache webspace, uploaded over

@@ -12,6 +12,13 @@ metrics:
   - label: Classification accuracy
   - label: Part types recognised
   - label: Output bins
+videos:
+  - src: /videos/lego-sorter-concept-1.mp4
+    poster: /videos/lego-sorter-concept-1.jpg
+    caption: "Konzeptanimation (KI-generiert): a mobile collector picks up loose bricks, the camera scans each one and a robot arm sorts them into bins."
+  - src: /videos/lego-sorter-concept-2.mp4
+    poster: /videos/lego-sorter-concept-2.jpg
+    caption: "Konzeptanimation (KI-generiert): bricks run along the conveyor under the camera, are recognised on the display and land in bins by colour."
 ---
 
 ## How it works

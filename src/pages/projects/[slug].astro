@@ -9,7 +9,7 @@ export async function getStaticPaths() {
 
 const { project } = Astro.props;
 const { Content } = await render(project);
-const { title, tagline, status, categories, problem, stack, metrics } = project.data;
+const { title, tagline, status, categories, problem, stack, metrics, videos } = project.data;
 ---
 
 <Base title={title} description={tagline}>
@@ -35,6 +35,19 @@ const { title, tagline, status, categories, problem, stack, metrics } = project.
           <dd>{stack.join(", ")}</dd>
         </div>
       </dl>
+
+      {videos.length > 0 && (
+        <div class="demos">
+          {videos.map((v) => (
+            <figure>
+              <video controls playsinline preload="none" poster={v.poster}>
+                <source src={v.src} type="video/mp4" />
+              </video>
+              <figcaption>{v.caption}</figcaption>
+            </figure>
+          ))}
+        </div>
+      )}
 
       <div class="prose">
         <h2>The problem</h2>
@@ -84,6 +97,28 @@ const { title, tagline, status, categories, problem, stack, metrics } = project.
   .facts div,
   .metrics dl div {
     padding: 0.9rem 1.25rem 0.9rem 0;
+  }
+  .demos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: 1.5rem;
+    margin: 0 0 2.5rem;
+  }
+  .demos figure {
+    margin: 0;
+  }
+  .demos video {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: #000;
+  }
+  .demos figcaption {
+    margin-top: 0.6rem;
+    color: var(--muted);
+    font-size: var(--step--1);
   }
   dt {
     color: var(--muted);
