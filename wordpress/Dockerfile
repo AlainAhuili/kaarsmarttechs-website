@@ -57,7 +57,7 @@ EXPOSE 9000
 # php-fpm is the base image's default command.
 
 # ---- api: FastAPI on uvicorn ---------------------------------------------------------
-FROM python:3.14-slim AS api
+FROM python:3.15-slim AS api
 # pick up Debian security fixes published after the base image was built
 RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 ENV PYTHONDONTWRITEBYTECODE=1 \
