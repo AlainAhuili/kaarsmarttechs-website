@@ -31,6 +31,8 @@ function resolves(href: string): boolean {
 const PREFIXES = { en: "", de: "/de", fr: "/fr" } as const;
 const langOf = (route: string) => (route.match(/^\/(de|fr)\//)?.[1] ?? "en") as keyof typeof PREFIXES;
 const unprefixed = (route: string) => route.replace(/^\/(de|fr)(?=\/)/, "");
+// Interactive demos in public/demos/ are standalone English pages without translations.
+const isDemo = (route: string) => route.startsWith("/demos/");
 
 describe("built site", () => {
   it("contains the required pages in every language", () => {
@@ -45,7 +47,10 @@ describe("built site", () => {
 
   it("has every page in all three languages", () => {
     const byLang = (lang: keyof typeof PREFIXES) =>
-      pages.filter((p) => p.route !== "/404.html" && langOf(p.route) === lang).map((p) => unprefixed(p.route)).sort();
+      pages
+        .filter((p) => p.route !== "/404.html" && !isDemo(p.route) && langOf(p.route) === lang)
+        .map((p) => unprefixed(p.route))
+        .sort();
     expect(byLang("de")).toEqual(byLang("en"));
     expect(byLang("fr")).toEqual(byLang("en"));
   });
@@ -64,7 +69,7 @@ describe("built site", () => {
       expect(page.html).toContain(`href="${PREFIXES[lang]}/datenschutz/"`);
     });
 
-    it.skipIf(route === "/404.html")("names its versions in every language, and they exist", () => {
+    it.skipIf(route === "/404.html" || isDemo(route))("names its versions in every language, and they exist", () => {
       const alternates = [...page.html.matchAll(/<link rel="alternate" hreflang="([\w-]+)" href="https?:\/\/[^/"]+(\/[^"]*)"/g)];
       expect(alternates.map((m) => m[1]).sort()).toEqual(["de", "en", "fr", "x-default"]);
       expect(alternates.map((m) => m[2]!).filter((h) => !resolves(h))).toEqual([]);

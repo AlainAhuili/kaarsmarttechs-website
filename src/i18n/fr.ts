@@ -227,6 +227,8 @@ export default {
     resultsNote:
       "Nous ne publions que des valeurs mesurées. Les valeurs manquantes sont en cours de mesure.",
     measuring: "En cours de mesure",
+    simulator: "Simulation interactive",
+    launchSimulator: "Lancer le simulateur 3D",
     next: "Parlez-nous d’un projet similaire",
   },
   contact: {

@@ -19,6 +19,9 @@ videos:
   - src: /videos/lego-sorter-concept-2.mp4
     poster: /videos/lego-sorter-concept-2.jpg
     caption: "Konzeptanimation (KI-generiert): les briques avancent sur le convoyeur sous la caméra, sont reconnues sur l’écran et tombent dans les bacs selon leur couleur."
+simulator:
+  href: /demos/sortbot/
+  caption: "Simulation de la cellule de tri : un robot ramasse les briques, scanne chacune en 3D et la dépose dans le bon bac selon sa couleur, sa forme ou sa taille. Interface en anglais."
 ---
 
 ## Fonctionnement

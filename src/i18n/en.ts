@@ -223,6 +223,8 @@ export default {
     results: "Results",
     resultsNote: "We publish measured numbers only. Open values are still being measured.",
     measuring: "Measuring",
+    simulator: "Interactive simulation",
+    launchSimulator: "Launch the 3D simulator",
     next: "Talk to us about a similar project",
   },
   contact: {

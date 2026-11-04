@@ -19,6 +19,9 @@ videos:
   - src: /videos/lego-sorter-concept-2.mp4
     poster: /videos/lego-sorter-concept-2.jpg
     caption: "Konzeptanimation (KI-generiert): bricks run along the conveyor under the camera, are recognised on the display and land in bins by colour."
+simulator:
+  href: /demos/sortbot/
+  caption: "A browser simulation of the sorting cell: a robot brushes in loose bricks, 3D-scans each one, registers its colour, shape and size and drops it into the matching bin."
 ---
 
 ## How it works

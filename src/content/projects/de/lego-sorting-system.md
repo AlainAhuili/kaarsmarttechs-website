@@ -19,6 +19,9 @@ videos:
   - src: /videos/lego-sorter-concept-2.mp4
     poster: /videos/lego-sorter-concept-2.jpg
     caption: "Konzeptanimation (KI-generiert): Steine laufen auf dem Förderband unter der Kamera durch, werden auf dem Display erkannt und landen nach Farbe sortiert in den Kisten."
+simulator:
+  href: /demos/sortbot/
+  caption: "Simulation der Sortierzelle im Browser: Ein Roboter kehrt Steine ein, scannt jeden in 3D und legt ihn nach Farbe, Form oder Größe in die passende Kiste. Oberfläche auf Englisch."
 ---
 
 ## So funktioniert es
