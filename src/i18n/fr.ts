@@ -34,6 +34,7 @@ export default {
     "Cloud & DevOps": "Cloud & DevOps",
     "AI & Agentic Tooling": "IA & outils agentiques",
     "Code Quality": "Qualité du code",
+    "Product Design": "Design produit",
   },
   sorter: {
     title:
@@ -91,11 +92,11 @@ export default {
         ],
       },
       "travel-hygienic-wc-seat-frame": {
-        tag: "Santé & quotidien connectés",
+        tag: "Santé & voyage",
         highlights: [
-          "Structure pliante compacte pour les déplacements",
-          "Module de désinfection UV-C sans contact",
-          "Cadre métallique léger",
+          "Mis en place et retiré sans contact",
+          "Couvre la lunette et l’intérieur de la cuvette",
+          "Se plie pour tenir dans une poche ou un sac",
         ],
       },
       "solar-led-wireframe-sculptures": {
