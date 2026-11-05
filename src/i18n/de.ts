@@ -34,6 +34,7 @@ export default {
     "Cloud & DevOps": "Cloud & DevOps",
     "AI & Agentic Tooling": "KI & Agenten-Tools",
     "Code Quality": "Codequalität",
+    "Product Design": "Produktdesign",
   },
   sorter: {
     title:
@@ -91,11 +92,11 @@ export default {
         ],
       },
       "travel-hygienic-wc-seat-frame": {
-        tag: "Smart Health & Alltag",
+        tag: "Gesundheit & Reisen",
         highlights: [
-          "Kompakte Klappkonstruktion für unterwegs",
-          "Berührungsloses UV-C-Desinfektionsmodul",
-          "Leichter Metallrahmen",
+          "Berührungslos angebracht und wieder entfernt",
+          "Deckt Brille und Beckeninneres ab",
+          "Faltbar für Tasche oder Rucksack",
         ],
       },
       "solar-led-wireframe-sculptures": {
@@ -226,6 +227,8 @@ export default {
     results: "Ergebnisse",
     resultsNote: "Wir veröffentlichen nur gemessene Werte. Offene Werte werden noch gemessen.",
     measuring: "Wird gemessen",
+    simulator: "Interaktive Simulation",
+    launchSimulator: "3D-Simulator starten",
     next: "Sprechen Sie uns auf ein ähnliches Projekt an",
   },
   contact: {

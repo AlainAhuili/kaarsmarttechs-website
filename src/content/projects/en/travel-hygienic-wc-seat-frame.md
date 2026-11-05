@@ -1,17 +1,25 @@
 ---
-title: Travel Hygienic WC Seat Frame
-tagline: A portable, folding seat frame that gives travellers a hygienic toilet seat wherever they are.
+title: "Sedeo: travel hygiene set for public toilets"
+tagline: A pocket-sized travel set that keeps you off a shared seat, covers the bowl and folds back into your bag.
 status: In development
-categories: ["Embedded Systems"]
+categories: ["Product Design"]
 order: 6
-problem: Public and travel toilets are often unhygienic, and disposable seat covers are flimsy and easy to run out of.
-stack: ["Mechanical design", "Lightweight metal frame", "UV-C LEDs", "Microcontroller"]
+problem: Sooner or later everyone has to use a toilet they don't trust. Toilet paper slips and tears, paper seat covers protect the seat at best and never the bowl, and cleaning up means touching exactly what you wanted to avoid.
+stack: ["Product design", "Folding mechanism", "Prototyping"]
 ---
 
-A portable, ergonomically shaped sanitary frame for travellers and public spaces. The frame folds down small enough to carry in a bag and opens into a stable seat that keeps the user off the shared surface.
+Sedeo is a pocket-sized travel set for public toilets in airports, trains, motorway stops and at festivals. It keeps you off a shared seat, keeps the bowl covered, and goes back in your bag without you touching anything you'd rather not.
 
-## Design goals
+## Our promise
 
-- **Compact folding architecture** that packs small for transit.
-- **Touch-free sanitisation:** a UV-C disinfection module that runs without the user touching the frame.
-- **Lightweight metal framing** that deploys quickly and stays rigid in use.
+- **Contact-free:** in place in seconds, and out again without touching anything you shouldn't.
+- **Protects the bowl:** covers not just the seat, but also the inside of the bowl, where splashes happen.
+- **Foldable:** folds small enough to slip into a handbag, a backpack or a coat pocket.
+
+## Made for
+
+Anyone who'd rather not think twice before sitting down: frequent travellers, parents on the go, pregnant women, seniors, festival-goers and anyone who cares about hygiene.
+
+## Status
+
+We are preparing the first prototypes. For early access, partnerships or investment, get in touch.

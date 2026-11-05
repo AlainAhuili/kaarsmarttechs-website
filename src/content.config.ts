@@ -27,6 +27,13 @@ const projects = defineCollection({
       )
       .max(4)
       .default([]),
+    // Interactive demo, self-hosted in public/demos/<name>/ and opened as its own page.
+    simulator: z
+      .object({
+        href: z.string().regex(/^\/demos\/[\w-]+\/$/),
+        caption: z.string().max(200),
+      })
+      .optional(),
   }),
 });
 

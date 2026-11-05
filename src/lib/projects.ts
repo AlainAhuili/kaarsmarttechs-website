@@ -5,6 +5,7 @@ export const CATEGORIES = [
   "Cloud & DevOps",
   "AI & Agentic Tooling",
   "Code Quality",
+  "Product Design",
 ] as const;
 
 export type Status = (typeof STATUSES)[number];

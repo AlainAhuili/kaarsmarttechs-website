@@ -11,7 +11,7 @@ const { lang, project } = Astro.props;
 const dict = useDict(lang);
 const t = dict.project;
 const { Content } = await render(project);
-const { title, tagline, status, categories, problem, stack, metrics, videos } = project.data;
+const { title, tagline, status, categories, problem, stack, metrics, videos, simulator } = project.data;
 ---
 
 <Base lang={lang} title={title} description={tagline}>
@@ -49,6 +49,16 @@ const { title, tagline, status, categories, problem, stack, metrics, videos } = 
             </figure>
           ))}
         </div>
+      )}
+
+      {simulator && (
+        <section class="simulator" aria-labelledby="simulator">
+          <h2 id="simulator">{t.simulator}</h2>
+          <p>{simulator.caption}</p>
+          <a class="button" href={simulator.href}>
+            {t.launchSimulator}
+          </a>
+        </section>
       )}
 
       <div class="prose">
@@ -120,6 +130,22 @@ const { title, tagline, status, categories, problem, stack, metrics, videos } = 
     margin-top: 0.6rem;
     color: var(--muted);
     font-size: var(--step--1);
+  }
+  .simulator {
+    margin: 0 0 2.5rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+  .simulator h2 {
+    margin-top: 0;
+    font-size: var(--step-1);
+  }
+  .simulator p {
+    max-width: 60ch;
+    color: var(--muted);
   }
   dt {
     color: var(--muted);

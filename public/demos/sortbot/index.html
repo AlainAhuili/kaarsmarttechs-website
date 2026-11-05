@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sortbot Sorting Cell</title>
+<meta name="description" content="Interactive 3D simulation of the Kaar Smart Techs LEGO sorting cell: a robot brushes in loose bricks, 3D-scans each one and sorts it into crates by colour, shape or size.">
+<link rel="icon" href="/favicon.png">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+/* Layout: control-room console — realistic 3D warehouse view as the main pane, scanner/register rail beside it (stacks below on phones). Committed dark look. */
+:root{
+  --bg:#0f1517;
+  --panel:#151d20;
+  --line:#25323a;
+  --fg:#dce5e7;
+  --muted:#879a9f;
+  --scan:#ff4d4d;
+  --ok:#57d3c7;
+    --f-display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--f-body);font-size:14px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:16px 24px}
+.wrap{max-width:1360px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-weight:700;font-size:1.6rem;letter-spacing:.02em;margin:0;text-wrap:balance}
+h1 small{font-weight:500;font-size:.85rem;color:var(--muted);letter-spacing:.12em;margin-left:10px;text-transform:uppercase}
+.controls{display:flex;flex-wrap:wrap;gap:8px}
+button{font-family:var(--f-display);font-weight:600;font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px 12px;cursor:pointer}
+button:hover{border-color:var(--ok)}
+button:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--ok);color:var(--bg);border-color:var(--ok)}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px}
+@media (max-width:860px){.main{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;height:clamp(380px,70vh,760px);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#6f7477}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.hud{position:absolute;left:12px;bottom:12px;right:12px;display:flex;flex-wrap:wrap;gap:8px;pointer-events:none}
+.chip{font-family:var(--f-mono);font-size:.78rem;color:var(--fg);background:rgba(15,21,23,.8);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:5px 11px;display:inline-flex;align-items:center;gap:8px;backdrop-filter:blur(4px)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);box-shadow:0 0 8px currentColor}
+.hint{position:absolute;top:10px;right:12px;font-size:.75rem;color:#e9eef0;text-shadow:0 1px 2px rgba(0,0,0,.6);pointer-events:none}
+.loading{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-mono);color:#e9eef0;background:#2a3034}
+aside{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card h2{font-family:var(--f-display);font-size:.8rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.readout{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-family:var(--f-mono);font-size:.82rem;font-variant-numeric:tabular-nums;margin:0}
+.readout dt{color:var(--muted)}
+.readout dd{margin:0;overflow-wrap:anywhere}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;width:0;background:var(--scan);transition:width .1s linear}
+.bins{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bin{border:1px solid var(--line);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:2px}
+.bin b{font-family:var(--f-display);font-size:1.5rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.bin span{font-size:.72rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.bin em{font-style:normal;font-family:var(--f-display);font-weight:600;font-size:.78rem}
+.log{list-style:none;margin:0;padding:0;max-height:260px;overflow:auto;font-family:var(--f-mono);font-size:.78rem;font-variant-numeric:tabular-nums}
+.log li{display:grid;grid-template-columns:62px 1fr auto;gap:8px;padding:6px 0;border-top:1px solid var(--line);align-items:center}
+.log li:first-child{border-top:0}
+.log .t{color:var(--muted)}
+.tag{padding:1px 7px;border-radius:4px;color:#111;font-weight:500}
+.empty{color:var(--muted);font-size:.82rem;margin:0}
+.seg{display:inline-flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.seg span{font-family:var(--f-display);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:0 10px}
+.seg button{border:0;border-left:1px solid var(--line);border-radius:0}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:6px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.cloud{position:relative;margin-top:10px;border-radius:6px;overflow:hidden;background:#0b1012;aspect-ratio:16/10;max-width:100%}
+.cloud canvas{display:block;width:100%;height:100%}
+.cloud .ov{position:absolute;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.04em;pointer-events:none;color:#5f7277}
+.cloud .tl{top:7px;left:9px}.cloud .tr{top:7px;right:9px;color:var(--ok)}
+.cloud .bl{bottom:7px;left:9px;color:var(--ok)}.cloud .br{bottom:7px;right:9px}
+.legend{display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--f-mono);font-size:.68rem;color:var(--muted)}
+.legend i{flex:1;height:5px;border-radius:3px;background:linear-gradient(90deg,#3050ff,#00d0ff,#30ff80,#ffe030,#ff3020)}
+.bins{grid-template-columns:repeat(2,1fr)}
+.bin small{font-family:var(--f-mono);font-size:.72rem;color:var(--fg);display:flex;align-items:center;min-height:1.2em}
+/* Links back to kaarsmarttechs.com (the Impressum must be reachable from every page). */
+.site-links{display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;padding-top:12px;border-top:1px solid var(--line);font-size:.82rem}
+.site-links nav{display:flex;flex-wrap:wrap;gap:6px 18px}
+.site-links a{color:var(--muted)}
+.site-links a:hover,.site-links a:focus-visible{color:var(--ok)}
+</style>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Sortbot S‑2 <small>Brush · 3D scan · Register · Sort</small></h1>
+    <div class="controls">
+      <button id="btnPause" type="button">Pause</button>
+      <button id="btnSpeed" type="button">Speed 1×</button>
+      <div class="seg" role="group" aria-label="Sort bricks by"><span>Sort by</span>
+        <button type="button" data-rule="color" aria-pressed="true">Color</button>
+        <button type="button" data-rule="shape" aria-pressed="false">Shape</button>
+        <button type="button" data-rule="size" aria-pressed="false">Size</button>
+      </div>
+      <button id="btnAdd" type="button">Scatter bricks</button>
+      <button id="btnFollow" type="button" aria-pressed="false">Follow robot</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="stage" id="stage">
+      <canvas id="c"></canvas>
+      <div class="loading" id="loading">Loading sorting cell…</div>
+      <div class="hint">Drag to orbit · scroll to zoom</div>
+      <div class="hud">
+        <span class="chip"><span class="dot" id="stateDot"></span><span id="stateTxt">Booting</span></span>
+        <span class="chip" id="clock">08:00:00</span>
+        <span class="chip" id="left">On floor: 0</span>
+      </div>
+    </div>
+
+    <aside>
+      <section class="card">
+        <h2>3D scan camera</h2>
+        <dl class="readout">
+          <dt>Status</dt><dd id="sStatus">Idle</dd>
+          <dt>Item ID</dt><dd id="sId">—</dd>
+          <dt>Shape</dt><dd id="sShape">—</dd>
+          <dt>Color</dt><dd id="sColor">—</dd>
+          <dt>Size</dt><dd id="sSize">—</dd>
+          <dt>Measured</dt><dd id="sMeas">—</dd>
+          <dt>Route</dt><dd id="sRoute">—</dd>
+        </dl>
+        <div class="bar"><i id="sBar"></i></div>
+        <div class="cloud"><canvas id="cloud"></canvas>
+          <span class="ov tl">3D SCAN · POINT CLOUD</span><span class="ov tr" id="cPts"></span>
+          <span class="ov bl" id="cDims"></span><span class="ov br" id="cRes">0.2 mm / px</span></div>
+        <div class="legend"><span>0 mm</span><i></i><span>Height</span><span>11 mm</span></div>
+      </section>
+
+      <section class="card">
+        <h2 id="binsTitle">Bins · sorted by color</h2>
+        <div class="bins" id="binsPanel"></div>
+      </section>
+
+      <section class="card">
+        <h2>Register</h2>
+        <ul class="log" id="log"></ul>
+        <p class="empty" id="logEmpty">No bricks registered yet. The robot is heading to the first one.</p>
+      </section>
+    </aside>
+  </div>
+
+  <footer class="site-links">
+    <a href="/projects/lego-sorting-system/">← Automated LEGO Sorting System</a>
+    <nav aria-label="Legal">
+      <a href="/">Kaar Smart Techs</a>
+      <a href="/impressum/">Impressum</a>
+      <a href="/datenschutz/">Privacy</a>
+    </nav>
+  </footer>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="sortbot.js"></script>
+
+</body>
+</html>

@@ -32,6 +32,7 @@ export default {
     "Cloud & DevOps": "Cloud & DevOps",
     "AI & Agentic Tooling": "AI & Agentic Tooling",
     "Code Quality": "Code Quality",
+    "Product Design": "Product Design",
   },
   sorter: {
     title:
@@ -89,11 +90,11 @@ export default {
         ],
       },
       "travel-hygienic-wc-seat-frame": {
-        tag: "Smart Health & Utility",
+        tag: "Health & Travel",
         highlights: [
-          "Compact folding architecture for transit",
-          "Touch-free UV-C disinfection module",
-          "Lightweight metal frame",
+          "In place and out again without contact",
+          "Covers the seat and the inside of the bowl",
+          "Folds small enough for a pocket or bag",
         ],
       },
       "solar-led-wireframe-sculptures": {
@@ -223,6 +224,8 @@ export default {
     results: "Results",
     resultsNote: "We publish measured numbers only. Open values are still being measured.",
     measuring: "Measuring",
+    simulator: "Interactive simulation",
+    launchSimulator: "Launch the 3D simulator",
     next: "Talk to us about a similar project",
   },
   contact: {
