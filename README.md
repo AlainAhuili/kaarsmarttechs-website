@@ -115,6 +115,29 @@ curl -s https://kaarsmarttechs.com/version.txt   # shows the new time
 
 Pages are cached for 5 minutes, so the change can take that long to show in a browser.
 
+## Test deploy on Google Cloud Run
+
+The same `Dockerfile` (static build served by non-root nginx on port 8080) also runs on Cloud
+Run. This is a test deployment; kaarsmarttechs.com still points to IONOS.
+
+- Project: `kaarsmarttechs-258264`, region `europe-west3` (Frankfurt)
+- Service: `kaarsmarttechs-website`, at most 2 instances, 256 MiB, scales to zero
+- URL: https://kaarsmarttechs-website-556433442775.europe-west3.run.app
+
+To deploy the current checkout (Cloud Build builds the image from the `Dockerfile`):
+
+```bash
+gcloud run deploy kaarsmarttechs-website --source . \
+  --project=kaarsmarttechs-258264 --region=europe-west3 \
+  --allow-unauthenticated --port=8080 --memory=256Mi --max-instances=2
+curl -s https://kaarsmarttechs-website-556433442775.europe-west3.run.app/version.txt
+```
+
+- `/healthz` returns 404 on the `run.app` address: Google's front end reserves paths ending in
+  `z` and never passes them to the container. Cloud Run checks the container health itself.
+- `version.txt` shows `dev` unless the image is built with `--build-arg VERSION=...`, which
+  `--source` deploys do not pass.
+
 ## Release artifact: WordPress + nginx + FastAPI + MariaDB
 
 `wordpress/` contains the same site on WordPress 7.1 (PHP 8.5), with a FastAPI service (Python
