@@ -102,9 +102,11 @@ jobs:
           cache-from: type=gha
 
   # ------------------------------------------------------------------- staging
+  # Off until the repository variable AWS_DEPLOYS_ENABLED is "true" (see wordpress.yml).
   staging:
     name: Deploy to staging
     needs: image
+    if: vars.AWS_DEPLOYS_ENABLED == 'true'
     uses: ./.github/workflows/deploy.yml
     with:
       environment: staging
