@@ -1,0 +1,72 @@
+# Cloud Run service for the cloud_production environment (project kaarsmarttechs-258264).
+# One instance holds two containers, the Cloud Run form of "nginx in front of the API":
+#   web  nginx: static Astro site, security headers, proxies /api/ to 127.0.0.1:8000 (ingress)
+#   api  FastAPI from wordpress/api, not reachable from outside the instance
+# Cloud Run terminates TLS and owns the public address, so nginx listens on plain 8080.
+# The delivery workflow fills in ${WEB_IMAGE}, ${API_IMAGE} and ${API_SECRET} and applies it with
+# `gcloud run services replace`.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: kaarsmarttechs-website
+  labels:
+    cloud.googleapis.com/location: europe-west3
+  annotations:
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    metadata:
+      annotations:
+        # SQLite lives in the instance's memory, so one instance keeps all API data in one place.
+        autoscaling.knative.dev/maxScale: "1"
+        run.googleapis.com/startup-cpu-boost: "true"
+        # nginx starts once the API passes its startup probe.
+        run.googleapis.com/container-dependencies: '{"web":["api"]}'
+    spec:
+      serviceAccountName: 556433442775-compute@developer.gserviceaccount.com
+      containerConcurrency: 80
+      timeoutSeconds: 60
+      containers:
+        - name: web
+          image: ${WEB_IMAGE}
+          ports:
+            - name: http1
+              containerPort: 8080
+          resources:
+            limits:
+              cpu: "1"
+              memory: 256Mi
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: 2
+            failureThreshold: 15
+        - name: api
+          image: ${API_IMAGE}
+          command: ["sh", "-c"]
+          args:
+            - >-
+              python -m app.sync && exec uvicorn --factory app.main:create_app
+              --host 0.0.0.0 --port 8000 --no-proxy-headers --no-server-header
+          env:
+            - name: DATABASE_URL
+              value: sqlite:////tmp/api.db
+            # Google's front end + nginx each append to X-Forwarded-For.
+            - name: TRUSTED_PROXY_HOPS
+              value: "2"
+            # Keys the IP hashes used for rate limiting. Generated fresh by every deploy: the data
+            # it protects lives in the in-memory SQLite and is gone on restart anyway. Move it to
+            # Secret Manager together with the move to Cloud SQL.
+            - name: API_SECRET
+              value: ${API_SECRET}
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            periodSeconds: 2
+            failureThreshold: 30

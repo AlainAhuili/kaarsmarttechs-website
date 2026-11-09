@@ -115,6 +115,44 @@ curl -s https://kaarsmarttechs.com/version.txt   # shows the new time
 
 Pages are cached for 5 minutes, so the change can take that long to show in a browser.
 
+## Test deploy on Google Cloud Run
+
+The same `Dockerfile` (static build served by non-root nginx on port 8080) also runs on Cloud
+Run. This is a test deployment; kaarsmarttechs.com still points to IONOS.
+
+- Project: `kaarsmarttechs-258264`, region `europe-west3` (Frankfurt)
+- Service: `kaarsmarttechs-website`, at most 2 instances, 256 MiB, scales to zero
+- URL: https://kaarsmarttechs-website-556433442775.europe-west3.run.app
+
+The service runs two containers, described in `infra/cloudrun/service.yaml`: `web` (nginx with the
+static site, the only one reachable from outside) proxies `/api/` to `api` (the FastAPI backend from
+`wordpress/api`) on `127.0.0.1:8000`. Cloud Run provides the domain, TLS and load balancing, so
+nginx listens on plain 8080. The API keeps its data in SQLite in the instance's memory, so the
+service runs at most one instance and contact messages are lost when it restarts; move to Cloud
+SQL before relying on the contact form. Its `API_SECRET` (the key for the rate-limit IP hashes) is
+generated fresh by each deploy, which loses nothing while the data is in memory; put it in Secret
+Manager together with the move to Cloud SQL. `docker compose up --build` runs the same pair locally.
+
+Every push to `main` deploys automatically: the `Deploy to Cloud Run` job in `delivery.yml`
+copies the scanned image to Artifact Registry and deploys it through the GitHub environment
+`cloud_production`. That environment only accepts `main`, holds the project, region, service and
+Workload Identity settings as variables, and is the only place allowed to act as the
+`github-deployer` service account (no key file is stored anywhere).
+
+To deploy the current checkout by hand (Cloud Build builds the image from the `Dockerfile`):
+
+```bash
+gcloud run deploy kaarsmarttechs-website --source . \
+  --project=kaarsmarttechs-258264 --region=europe-west3 \
+  --allow-unauthenticated --port=8080 --memory=256Mi --max-instances=2
+curl -s https://kaarsmarttechs-website-556433442775.europe-west3.run.app/version.txt
+```
+
+- `/healthz` returns 404 on the `run.app` address: Google's front end reserves paths ending in
+  `z` and never passes them to the container. Cloud Run checks the container health itself.
+- `version.txt` shows `dev` unless the image is built with `--build-arg VERSION=...`, which
+  `--source` deploys do not pass.
+
 ## Release artifact: WordPress + nginx + FastAPI + MariaDB
 
 `wordpress/` contains the same site on WordPress 7.1 (PHP 8.5), with a FastAPI service (Python

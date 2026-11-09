@@ -1,4 +1,6 @@
 # Local production-like run: docker compose up --build, then open http://localhost:8080
+# Same layout as the Cloud Run service: nginx in front, the FastAPI backend beside it on
+# 127.0.0.1:8000 (it shares the web container's network), SQLite in /tmp.
 services:
   web:
     build:
@@ -7,6 +9,26 @@ services:
         VERSION: local
     ports:
       - "8080:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  api:
+    build:
+      context: .
+      dockerfile: wordpress/Dockerfile
+      target: api
+      args:
+        VERSION: local
+    network_mode: "service:web"
+    environment:
+      DATABASE_URL: sqlite:////tmp/api.db
+      API_SECRET: local-only-secret
+      TRUSTED_PROXY_HOPS: "1"
+    command:
+      - sh
+      - -c
+      - python -m app.sync && exec uvicorn --factory app.main:create_app --host 127.0.0.1 --port 8000 --no-proxy-headers --no-server-header
     read_only: true
     tmpfs:
       - /tmp

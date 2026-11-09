@@ -17,11 +17,17 @@ CATEGORIES = (
     "Cloud & DevOps",
     "AI & Agentic Tooling",
     "Code Quality",
+    "Product Design",
 )
 
 Status = Literal["In development", "Internal", "Client work"]
 Category = Literal[
-    "Computer Vision", "Embedded Systems", "Cloud & DevOps", "AI & Agentic Tooling", "Code Quality"
+    "Computer Vision",
+    "Embedded Systems",
+    "Cloud & DevOps",
+    "AI & Agentic Tooling",
+    "Code Quality",
+    "Product Design",
 ]
 
 _FRONT_MATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---(?:\r?\n)?(.*)\Z", re.S)
@@ -48,6 +54,10 @@ class FrontMatter(BaseModel):
     stack: Annotated[list[str], Field(min_length=1)]
     # Only measured numbers are published; a missing value renders as "Measuring".
     metrics: list[Metric] = []
+    # Media for the Astro project pages (see src/content.config.ts). Accepted so the shared files
+    # validate here too; the API does not serve them.
+    videos: Annotated[list[dict[str, str]], Field(max_length=4)] = []
+    simulator: dict[str, str] | None = None
 
 
 class InvalidProject(ValueError):
