@@ -116,14 +116,17 @@ jobs:
       id-token: write
 
   # ------------------------------------------------------ Google Cloud Run (test)
-  # Promotes the same scanned image to Cloud Run. Logs in through Workload Identity Federation:
-  # only jobs in this repo's cloud_production environment (main branch only) may act as the
-  # github-deployer service account, so no key is stored. Settings are environment variables.
+  # The blueprint "nginx reverse proxy in front of an API container" on Cloud Run: one service with
+  # the scanned web image (nginx, ingress) and the FastAPI image beside it, described in
+  # infra/cloudrun/service.yaml. Cloud Run provides DNS, TLS and the load balancer.
+  # Logs in through Workload Identity Federation: only jobs in this repo's cloud_production
+  # environment (main branch only) may act as the github-deployer service account, so no key is
+  # stored. Settings are environment variables.
   cloud_production:
     name: Deploy to Cloud Run
     needs: image
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     environment:
       name: cloud_production
       url: ${{ steps.deploy.outputs.url }}
@@ -132,8 +135,20 @@ jobs:
       packages: read
       id-token: write
     env:
-      AR_IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/cloud-run-source-deploy/${{ vars.CLOUD_RUN_SERVICE }}:sha-${{ github.sha }}
+      REGISTRY: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/cloud-run-source-deploy
     steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: |
+          docker build -f wordpress/Dockerfile --target api \
+            --build-arg VERSION=${{ github.sha }} -t "$REGISTRY/kaarsmarttechs-api:sha-${{ github.sha }}" .
+      - name: Vulnerability scan of the API image (fails on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/kaarsmarttechs-api:sha-${{ github.sha }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -144,18 +159,22 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Copy the scanned image to Artifact Registry
+      - name: Push both images to Artifact Registry
         run: |
           gcloud auth configure-docker "${{ vars.GCP_REGION }}-docker.pkg.dev" --quiet
+          web="$REGISTRY/${{ vars.CLOUD_RUN_SERVICE }}:sha-${{ github.sha }}"
           docker pull "${{ needs.image.outputs.ref }}"
-          docker tag "${{ needs.image.outputs.ref }}" "$AR_IMAGE"
-          docker push "$AR_IMAGE"
+          docker tag "${{ needs.image.outputs.ref }}" "$web"
+          docker push "$web"
+          docker push "$REGISTRY/kaarsmarttechs-api:sha-${{ github.sha }}"
+          echo "WEB_IMAGE=$web" >> "$GITHUB_ENV"
+          echo "API_IMAGE=$REGISTRY/kaarsmarttechs-api:sha-${{ github.sha }}" >> "$GITHUB_ENV"
       - name: Deploy
         id: deploy
         run: |
-          gcloud run deploy "${{ vars.CLOUD_RUN_SERVICE }}" \
-            --project="${{ vars.GCP_PROJECT_ID }}" --region="${{ vars.GCP_REGION }}" \
-            --image="$AR_IMAGE" --quiet
+          envsubst '${WEB_IMAGE} ${API_IMAGE}' < infra/cloudrun/service.yaml > service.yaml
+          gcloud run services replace service.yaml \
+            --project="${{ vars.GCP_PROJECT_ID }}" --region="${{ vars.GCP_REGION }}"
           url=$(gcloud run services describe "${{ vars.CLOUD_RUN_SERVICE }}" \
             --project="${{ vars.GCP_PROJECT_ID }}" --region="${{ vars.GCP_REGION }}" \
             --format='value(status.url)')
@@ -163,7 +182,8 @@ jobs:
       - name: Smoke test
         run: |
           url="${{ steps.deploy.outputs.url }}"
-          for path in / /de/ /fr/; do
+          for path in / /de/ /fr/ /api/projects; do
             curl -fsS -o /dev/null "$url$path"
           done
           test "$(curl -fsS "$url/version.txt")" = "${{ github.sha }}"
+          curl -fsS "$url/api/health" | grep -q '"version":"${{ github.sha }}"'

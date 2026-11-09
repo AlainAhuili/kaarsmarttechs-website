@@ -6,8 +6,9 @@ from pathlib import Path
 
 from sqlalchemy.engine import URL
 
-# The Markdown project entries shared with the Astro site. The image copies them to /srv/content.
-_REPO_PROJECTS = Path(__file__).resolve().parents[3] / "src" / "content" / "projects"
+# The English Markdown project entries shared with the Astro site (the image copies them to
+# /srv/content). The API serves English only; de/ and fr/ are translations used by the Astro site.
+_REPO_PROJECTS = Path(__file__).resolve().parents[3] / "src" / "content" / "projects" / "en"
 
 
 @dataclass(frozen=True)

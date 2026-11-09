@@ -124,6 +124,14 @@ Run. This is a test deployment; kaarsmarttechs.com still points to IONOS.
 - Service: `kaarsmarttechs-website`, at most 2 instances, 256 MiB, scales to zero
 - URL: https://kaarsmarttechs-website-556433442775.europe-west3.run.app
 
+The service runs two containers, described in `infra/cloudrun/service.yaml`: `web` (nginx with the
+static site, the only one reachable from outside) proxies `/api/` to `api` (the FastAPI backend from
+`wordpress/api`) on `127.0.0.1:8000`. Cloud Run provides the domain, TLS and load balancing, so
+nginx listens on plain 8080. The API keeps its data in SQLite in the instance's memory, so the
+service runs at most one instance and contact messages are lost when it restarts; move to Cloud
+SQL before relying on the contact form. Its `API_SECRET` comes from Secret Manager
+(`kaarsmarttechs-api-secret`). `docker compose up --build` runs the same pair locally.
+
 Every push to `main` deploys automatically: the `Deploy to Cloud Run` job in `delivery.yml`
 copies the scanned image to Artifact Registry and deploys it through the GitHub environment
 `cloud_production`. That environment only accepts `main`, holds the project, region, service and

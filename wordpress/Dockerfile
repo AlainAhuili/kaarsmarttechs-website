@@ -62,7 +62,7 @@ FROM python:3.14-slim AS api
 RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PROJECTS_PATH=/srv/content/projects
+    PROJECTS_PATH=/srv/content/projects/en
 WORKDIR /srv/api
 COPY wordpress/api/requirements.txt ./
 # pip is not needed at runtime; removing it also removes its vendored libraries from the scan.
