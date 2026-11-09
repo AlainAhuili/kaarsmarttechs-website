@@ -124,7 +124,13 @@ Run. This is a test deployment; kaarsmarttechs.com still points to IONOS.
 - Service: `kaarsmarttechs-website`, at most 2 instances, 256 MiB, scales to zero
 - URL: https://kaarsmarttechs-website-556433442775.europe-west3.run.app
 
-To deploy the current checkout (Cloud Build builds the image from the `Dockerfile`):
+Every push to `main` deploys automatically: the `Deploy to Cloud Run` job in `delivery.yml`
+copies the scanned image to Artifact Registry and deploys it through the GitHub environment
+`cloud_production`. That environment only accepts `main`, holds the project, region, service and
+Workload Identity settings as variables, and is the only place allowed to act as the
+`github-deployer` service account (no key file is stored anywhere).
+
+To deploy the current checkout by hand (Cloud Build builds the image from the `Dockerfile`):
 
 ```bash
 gcloud run deploy kaarsmarttechs-website --source . \
