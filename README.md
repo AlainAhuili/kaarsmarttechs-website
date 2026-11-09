@@ -93,8 +93,10 @@ them short (under a minute, under ~25 MB) and free of identifiable people.
 
 kaarsmarttechs.com is the static Astro build (`dist/`) on IONOS Apache webspace, uploaded over
 SFTP. The SFTP host and user are in the IONOS control panel (the user is SFTP-only, no shell).
-The GitHub Actions deploy to EKS has failed at AWS role assumption since 2026-10-12 and does not
-reach this host.
+The GitHub Actions deploys to EKS failed at AWS role assumption from 2026-10-12 and are switched off:
+the staging jobs in `delivery.yml` and `wordpress.yml` (and WordPress production, which needs
+staging) only run when the repository variable `AWS_DEPLOYS_ENABLED` is `true`. Apply the role in
+`infra/terraform` before turning them back on. They never reached this host.
 
 - The domain serves from the **`/kaarsmarttechs`** folder, not the SFTP root. The root holds an
   older unused copy; do not deploy there.
