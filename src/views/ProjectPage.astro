@@ -11,7 +11,8 @@ const { lang, project } = Astro.props;
 const dict = useDict(lang);
 const t = dict.project;
 const { Content } = await render(project);
-const { title, tagline, status, categories, problem, stack, metrics, videos, simulator } = project.data;
+const { title, tagline, status, categories, problem, stack, metrics, videos, simulator } =
+  project.data;
 ---
 
 <Base lang={lang} title={title} description={tagline}>

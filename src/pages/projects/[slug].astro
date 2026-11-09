@@ -5,7 +5,10 @@ import { projectSlug } from "../../i18n";
 
 export async function getStaticPaths() {
   const projects = await getCollection("projects", (p) => p.id.startsWith("en/"));
-  return projects.map((project) => ({ params: { slug: projectSlug(project.id) }, props: { project } }));
+  return projects.map((project) => ({
+    params: { slug: projectSlug(project.id) },
+    props: { project },
+  }));
 }
 
 const { project } = Astro.props;
