@@ -172,9 +172,13 @@ jobs:
       - name: Deploy
         id: deploy
         run: |
-          envsubst '${WEB_IMAGE} ${API_IMAGE}' < infra/cloudrun/service.yaml > service.yaml
-          gcloud run services replace service.yaml \
+          API_SECRET=$(openssl rand -hex 32)
+          echo "::add-mask::$API_SECRET"
+          export API_SECRET
+          envsubst '${WEB_IMAGE} ${API_IMAGE} ${API_SECRET}' < infra/cloudrun/service.yaml > "$RUNNER_TEMP/service.yaml"
+          gcloud run services replace "$RUNNER_TEMP/service.yaml" \
             --project="${{ vars.GCP_PROJECT_ID }}" --region="${{ vars.GCP_REGION }}"
+          rm "$RUNNER_TEMP/service.yaml"
           url=$(gcloud run services describe "${{ vars.CLOUD_RUN_SERVICE }}" \
             --project="${{ vars.GCP_PROJECT_ID }}" --region="${{ vars.GCP_REGION }}" \
             --format='value(status.url)')

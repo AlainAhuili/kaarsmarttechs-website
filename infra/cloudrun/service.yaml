@@ -3,7 +3,7 @@
 #   web  nginx: static Astro site, security headers, proxies /api/ to 127.0.0.1:8000 (ingress)
 #   api  FastAPI from wordpress/api, not reachable from outside the instance
 # Cloud Run terminates TLS and owns the public address, so nginx listens on plain 8080.
-# The delivery workflow fills in ${WEB_IMAGE} and ${API_IMAGE} and applies this file with
+# The delivery workflow fills in ${WEB_IMAGE}, ${API_IMAGE} and ${API_SECRET} and applies it with
 # `gcloud run services replace`.
 apiVersion: serving.knative.dev/v1
 kind: Service
@@ -55,11 +55,11 @@ spec:
             # Google's front end + nginx each append to X-Forwarded-For.
             - name: TRUSTED_PROXY_HOPS
               value: "2"
+            # Keys the IP hashes used for rate limiting. Generated fresh by every deploy: the data
+            # it protects lives in the in-memory SQLite and is gone on restart anyway. Move it to
+            # Secret Manager together with the move to Cloud SQL.
             - name: API_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: kaarsmarttechs-api-secret
-                  key: latest
+              value: ${API_SECRET}
           resources:
             limits:
               cpu: "1"
