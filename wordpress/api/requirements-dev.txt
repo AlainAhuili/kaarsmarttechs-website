@@ -1,6 +1,6 @@
 # Lint and test tools, fully pinned (resolved on python:3.14-slim).
 -r requirements.txt
-httpcore2==2.13.1
+httpcore2==2.16.0
 httpx2==2.13.1
 iniconfig==2.3.1
 packaging==26.3
